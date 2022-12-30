@@ -117,6 +117,11 @@ class Aplicacion:
 
         # Funciones iniciales
 
+        # no funciona todavia
+        self.vc_percent.set(self.calcular_porciento_de_tanques(villa_cuba))
+        self.cs_percent.set(self.calcular_porciento_de_tanques(casas))
+        self.mo_percent.set(self.calcular_porciento_de_tanques(morlas))
+
         # Enfoque inicial
         self.medicion_cm.focus_set()
         self.cm.set('')
@@ -136,6 +141,9 @@ class Aplicacion:
     def enter(self, event):
         self.calcular()
 
+    def calcular_porciento_de_tanques(self, tank):
+        return tank.percent()
+
     def calcular(self):
         try:
             cm = self.cm.get()
@@ -153,7 +161,7 @@ class Aplicacion:
                 return 1
 
             existencia_anterior = extract_existencia(villa_cuba)
-            volume = round(villa_cuba.volume(cm)*1000, 1)
+            volume = villa_cuba.volume(cm)
 
             self.existencia.set(volume)
             self.consumo.set(round(existencia_anterior-volume))
@@ -167,7 +175,7 @@ class Aplicacion:
                 return 1
 
             existencia_anterior = extract_existencia(casas)
-            volume = round(casas.volume(cm)*1000, 1)
+            volume = casas.volume(cm)
 
             self.existencia.set(volume)
             self.consumo.set(round(existencia_anterior-volume))
@@ -181,7 +189,7 @@ class Aplicacion:
                 return 1
 
             existencia_anterior = extract_existencia(morlas)
-            volume = round(morlas.volume(cm)*1000, 1)
+            volume = morlas.volume(cm)
 
             self.existencia.set(volume)
             self.consumo.set(round(existencia_anterior-volume))

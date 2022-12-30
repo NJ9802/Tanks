@@ -4,9 +4,9 @@ from db_scripts import update_existencia, extract_existencia
 
 
 
-villa_cuba = Tank('Villa Cuba', 1.8969469/2, 7.558)
-casas =Tank('Las Casas', 0.707, 6.068)
-morlas = Tank('Las Morlas', 0.707, 6.108)
+villa_cuba = Tank('Villa Cuba', 1.8969469/2, 7.558, 21359)
+casas =Tank('Las Casas', 0.707, 6.068, 9529)
+morlas = Tank('Las Morlas', 0.707, 6.108, 9592)
 
 
 
