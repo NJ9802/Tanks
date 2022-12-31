@@ -6,7 +6,8 @@ try:
 		"""
 			CREATE TABLE IF NOT EXISTS tanks(
 				location TEXT NOT NULL,
-				existencia REAL NOT NULL
+				existencia REAL NOT NULL,
+				height_cm REAL NOT NULL
 			);
 		"""
 	]

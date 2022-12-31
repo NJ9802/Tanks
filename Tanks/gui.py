@@ -2,7 +2,6 @@ from tkinter import *
 from tkinter.ttk import *
 
 from cylinder_volume import villa_cuba, casas, morlas
-from db_scripts import update_existencia, extract_existencia
 
 
 class Aplicacion:
@@ -10,7 +9,7 @@ class Aplicacion:
         self.root = Tk()
         self.root.title('Calculo de Combustible en Tanques')
         self.root.resizable(0, 0)
-        
+
         # Variables
         self.cm = DoubleVar()
         self.localizacion = StringVar(value='vc')
@@ -19,6 +18,8 @@ class Aplicacion:
         self.vc_percent = DoubleVar()
         self.cs_percent = DoubleVar()
         self.mo_percent = DoubleVar()
+        self.existencia_anterior = DoubleVar()
+        self.medicion_anterior = DoubleVar()
 
         # Widgets
         self.medicion_cm_label = Label(self.root, text='Medicion en cm:')
@@ -28,13 +29,16 @@ class Aplicacion:
                                    text='Seleccione el Tanque:')
         self.tanque_vc = Radiobutton(self.root, text='Villa Cuba',
                                      variable=self.localizacion,
-                                     value='vc')
+                                     value='vc',
+                                     command=self.actualizar_valores)
         self.tanque_cs = Radiobutton(self.root, text='Casas',
                                      variable=self.localizacion,
-                                     value='cs')
+                                     value='cs',
+                                     command=self.actualizar_valores)
         self.tanque_mo = Radiobutton(self.root, text='Las Morlas',
                                      variable=self.localizacion,
-                                     value='mo')
+                                     value='mo',
+                                     command=self.actualizar_valores)
 
         self.existencia_final_label = Label(self.root,
                                             text='Existencia Final:')
@@ -42,6 +46,21 @@ class Aplicacion:
                                       textvariable=self.existencia,
                                       foreground='yellow', anchor='e',
                                       background='black')
+
+        self.existencia_anterior_label = Label(self.root,
+                                               text='Existencia Anterior:')
+        self.existencia_anterior_cm = Label(self.root, width=10,
+                                            textvariable=self.existencia_anterior,
+                                            foreground='yellow', anchor='e',
+                                            background='black')
+
+        self.medicion_anterior_label = Label(self.root,
+                                             text='Medicion Anterior:')
+        self.medicion_anterior_cm = Label(self.root, width=10,
+                                          textvariable=self.medicion_anterior,
+                                          foreground='yellow', anchor='e',
+                                          background='black')
+
         self.gasto_combustible_label = Label(self.root,
                                              text='Consumido:')
         self.gasto_combustible = Label(self.root, width=10,
@@ -84,43 +103,55 @@ class Aplicacion:
         self.separador1.grid(column=0, row=3, columnspan=2,
                              pady=5, padx=5, sticky="ew")
 
-        self.medicion_cm_label.grid(column=0, row=4, padx=10, pady=10)
-        self.medicion_cm.grid(column=1, row=4, padx=10, pady=10)
+        self.medicion_anterior_label.grid(column=0, row=4, padx=10, pady=10)
+        self.medicion_anterior_cm.grid(column=1, row=4, padx=10, pady=10)
 
-        self.separador2.grid(column=0, row=5, columnspan=2,
+        self.medicion_cm_label.grid(column=0, row=5, padx=10, pady=10)
+        self.medicion_cm.grid(column=1, row=5, padx=10, pady=10)
+
+        self.separador2.grid(column=0, row=6, columnspan=2,
                              padx=5, pady=5, sticky="ew")
 
-        self.gasto_combustible_label.grid(column=0, row=6,
-                                          padx=10, pady=10)
-        self.gasto_combustible.grid(column=1, row=6, padx=10, pady=10)
-
-        self.existencia_final_label.grid(column=0, row=7,
+        self.existencia_anterior_label.grid(column=0, row=7,
+                                            padx=10, pady=10)
+        self.existencia_anterior_cm.grid(column=1, row=7,
                                          padx=10, pady=10)
-        self.existencia_final.grid(column=1, row=7,
+
+        self.existencia_final_label.grid(column=0, row=8,
+                                         padx=10, pady=10)
+        self.existencia_final.grid(column=1, row=8,
                                    padx=10, pady=10)
 
-        self.boton_calcular.grid(column=0, row=8, padx=10, pady=10)
-        self.boton_salir.grid(column=1, row=8, padx=10, pady=10)
+        self.gasto_combustible_label.grid(column=0, row=9,
+                                          padx=10, pady=10)
+        self.gasto_combustible.grid(column=1, row=9, padx=10, pady=10)
 
-        self.separador_vertical.grid(column=2, row=0, rowspan=9,
+        self.boton_calcular.grid(column=0, row=10, padx=10, pady=10)
+        self.boton_salir.grid(column=1, row=10, padx=10, pady=10)
+
+        self.separador_vertical.grid(column=2, row=0, rowspan=11,
                                      padx=5, pady=5, sticky='ns')
 
         self.vc_label.grid(column=3, row=0, padx=5, pady=10)
         self.vc_progressbar.grid(column=3, row=1, padx=5, pady=5,
-                                 rowspan=8)
+                                 rowspan=10)
         self.cs_label.grid(column=4, row=0, padx=5, pady=10)
         self.cs_progressbar.grid(column=4, row=1, padx=5, pady=5,
-                                 rowspan=8)
+                                 rowspan=10)
         self.mo_label.grid(column=5, row=0, padx=5, pady=10)
         self.mo_progressbar.grid(column=5, row=1, padx=5, pady=5,
-                                 rowspan=8)
+                                 rowspan=10)
 
         # Funciones iniciales
 
-        # no funciona todavia
-        self.vc_percent.set(self.calcular_porciento_de_tanques(villa_cuba))
-        self.cs_percent.set(self.calcular_porciento_de_tanques(casas))
-        self.mo_percent.set(self.calcular_porciento_de_tanques(morlas))
+        # Valor inicial de medicion anterior y existencia anterior
+        self.medicion_anterior.set(villa_cuba.height_cm)
+        self.existencia_anterior.set(villa_cuba.stock)
+
+        # Actualizar por ciento en barras
+        self.vc_percent.set(villa_cuba.percent())
+        self.cs_percent.set(casas.percent())
+        self.mo_percent.set(morlas.percent())
 
         # Enfoque inicial
         self.medicion_cm.focus_set()
@@ -141,8 +172,23 @@ class Aplicacion:
     def enter(self, event):
         self.calcular()
 
-    def calcular_porciento_de_tanques(self, tank):
-        return tank.percent()
+    def actualizar_valores(self):
+        self.existencia.set(0.0)
+        self.consumo.set(0.0)
+        self.cm.set('')
+        self.medicion_cm.focus_set()
+
+        if self.localizacion.get() == 'vc':
+            self.medicion_anterior.set(villa_cuba.height_cm)
+            self.existencia_anterior.set(villa_cuba.stock)
+
+        elif self.localizacion.get() == 'cs':
+            self.medicion_anterior.set(casas.height_cm)
+            self.existencia_anterior.set(casas.stock)
+
+        else:
+            self.medicion_anterior.set(morlas.height_cm)
+            self.existencia_anterior.set(morlas.stock)
 
     def calcular(self):
         try:
@@ -154,18 +200,19 @@ class Aplicacion:
             return 1
 
         if self.localizacion.get() == 'vc':
+
             if cm > 189:
                 self.consumo.set('Error!')
                 self.existencia.set('Error!')
                 print('Medicion excedida')
                 return 1
 
-            existencia_anterior = extract_existencia(villa_cuba)
+            existencia_anterior = villa_cuba.stock
             volume = villa_cuba.volume(cm)
 
             self.existencia.set(volume)
             self.consumo.set(round(existencia_anterior-volume))
-            update_existencia(villa_cuba, volume)
+            self.vc_percent.set(villa_cuba.percent())
 
         elif self.localizacion.get() == 'cs':
             if cm > 141:
@@ -174,12 +221,12 @@ class Aplicacion:
                 print('Medicion excedida')
                 return 1
 
-            existencia_anterior = extract_existencia(casas)
+            existencia_anterior = casas.stock
             volume = casas.volume(cm)
 
             self.existencia.set(volume)
             self.consumo.set(round(existencia_anterior-volume))
-            update_existencia(casas, volume)
+            self.cs_percent.set(casas.percent())
 
         else:
             if cm > 141:
@@ -188,12 +235,12 @@ class Aplicacion:
                 print('Medicion excedida')
                 return 1
 
-            existencia_anterior = extract_existencia(morlas)
+            existencia_anterior = morlas.stock
             volume = morlas.volume(cm)
 
             self.existencia.set(volume)
             self.consumo.set(round(existencia_anterior-volume))
-            update_existencia(morlas, volume)
+            self.mo_percent.set(morlas.percent())
 
 
 def main():

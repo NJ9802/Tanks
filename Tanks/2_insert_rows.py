@@ -5,11 +5,11 @@ try:
 	tanks = [
 		"""
 		INSERT INTO tanks
-		(location, existencia)
+		(location, existencia, height_cm)
 		VALUES
-		('Villa Cuba', 10602.4),
-		('Las Casas', 1546.6),
-		('Las Morlas', 5293.4);
+		('Villa Cuba', 10602.4, 15),
+		('Las Casas', 1546.6, 15),
+		('Las Morlas', 5293.4, 15);
 		"""
 	]
 	for sentencia in tanks:
