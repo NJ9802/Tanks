@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter.ttk import *
-
+from db_scripts import update_existencia
 from cylinder_volume import villa_cuba, casas, morlas
 
 
@@ -9,6 +9,7 @@ class Aplicacion:
         self.root = Tk()
         self.root.title('Calculo de Combustible en Tanques')
         self.root.resizable(0, 0)
+        self.root.option_add('*tearOff', False)
 
         # Variables
         self.cm = DoubleVar()
@@ -20,6 +21,39 @@ class Aplicacion:
         self.mo_percent = DoubleVar()
         self.existencia_anterior = DoubleVar()
         self.medicion_anterior = DoubleVar()
+        self.entrada_litros = DoubleVar()
+        self.localizacion_entrada = StringVar(value='vc')
+
+        # Menu
+        barramenu = Menu(self.root)
+        self.root['menu'] = barramenu
+        self.menu1 = Menu(barramenu)
+        self.menu2 = Menu(barramenu)
+
+        barramenu.add_cascade(menu=self.menu1,
+                              label='Archivo')
+        barramenu.add_cascade(menu=self.menu2,
+                              label='Opciones')
+
+        self.menu1.add_command(label='Guardar',
+                               command=self.guardar, underline=0,
+                               accelerator='Ctrl+g')
+        self.menu1.add_separator()
+        self.menu1.add_command(label='Salir',
+                               command=quit, underline=0,
+                               accelerator='Alt+F4')
+
+        self.menu2.add_command(label='Establecer valor inicial',
+                               command=self.valor_inicial)
+        self.menu2.add_command(label='Entrada de Combustible',
+                               underline=0, command=self.entrada,
+                               accelerator='Ctrl+e')
+
+        # Barra de estado
+        self.mensaje = 'Hecho por Nelson J. Aldazabal Hernandez. Colaborador Maykel'
+        self.barra_estado = Label(self.root, text=self.mensaje,
+                                  border=1, relief='sunken',
+                                  anchor='w')
 
         # Widgets
         self.medicion_cm_label = Label(self.root, text='Medicion en cm:')
@@ -70,8 +104,6 @@ class Aplicacion:
 
         self.boton_calcular = Button(self.root, text='Calcular',
                                      command=self.calcular)
-        self.boton_salir = Button(self.root, text='Salir',
-                                  command=quit)
 
         self.vc_label = Label(self.root,
                               text='Villa Cuba')
@@ -126,8 +158,8 @@ class Aplicacion:
                                           padx=10, pady=10)
         self.gasto_combustible.grid(column=1, row=9, padx=10, pady=10)
 
-        self.boton_calcular.grid(column=0, row=10, padx=10, pady=10)
-        self.boton_salir.grid(column=1, row=10, padx=10, pady=10)
+        self.boton_calcular.grid(column=0, row=10, padx=10, pady=10,
+                                 columnspan=2)
 
         self.separador_vertical.grid(column=2, row=0, rowspan=11,
                                      padx=5, pady=5, sticky='ns')
@@ -141,6 +173,9 @@ class Aplicacion:
         self.mo_label.grid(column=5, row=0, padx=5, pady=10)
         self.mo_progressbar.grid(column=5, row=1, padx=5, pady=5,
                                  rowspan=10)
+
+        self.barra_estado.grid(column=0, row=11,
+                               columnspan=6, sticky='ew')
 
         # Funciones iniciales
 
@@ -162,6 +197,11 @@ class Aplicacion:
 
         # Calcular al presionar ENTER
         self.root.bind('<Return>', self.enter)
+
+        # Guardar
+        self.root.bind('<Control-g>', lambda _: self.guardar())
+
+        self.root.bind('<Control-e>', lambda _: self.entrada())
 
         self.root.mainloop()
 
@@ -196,7 +236,9 @@ class Aplicacion:
         except:
             self.consumo.set('Error!')
             self.existencia.set('Error!')
-            print('Medicion en cm tiene q tener un valor numerico')
+            self.barra_estado['text'] = 'Medicion en cm tiene que tener un valor numerico'
+            self.root.after(4000,
+                            lambda: self.barra_estado.config(text=self.mensaje))
             return 1
 
         if self.localizacion.get() == 'vc':
@@ -204,10 +246,12 @@ class Aplicacion:
             if cm > 189:
                 self.consumo.set('Error!')
                 self.existencia.set('Error!')
-                print('Medicion excedida')
+                self.barra_estado['text'] = 'Medicion excedida'
+                self.root.after(4000,
+                                lambda: self.barra_estado.config(text=self.mensaje))
                 return 1
 
-            existencia_anterior = villa_cuba.stock
+            existencia_anterior = self.existencia_anterior.get()
             volume = villa_cuba.volume(cm)
 
             self.existencia.set(volume)
@@ -218,7 +262,9 @@ class Aplicacion:
             if cm > 141:
                 self.consumo.set('Error!')
                 self.existencia.set('Error!')
-                print('Medicion excedida')
+                self.barra_estado['text'] = 'Medicion excedida'
+                self.root.after(4000,
+                                lambda: self.barra_estado.config(text=self.mensaje))
                 return 1
 
             existencia_anterior = casas.stock
@@ -232,7 +278,9 @@ class Aplicacion:
             if cm > 141:
                 self.consumo.set('Error!')
                 self.existencia.set('Error!')
-                print('Medicion excedida')
+                self.barra_estado['text'] = 'Medicion excedida'
+                self.root.after(4000,
+                                lambda: self.barra_estado.config(text=self.mensaje))
                 return 1
 
             existencia_anterior = morlas.stock
@@ -241,6 +289,161 @@ class Aplicacion:
             self.existencia.set(volume)
             self.consumo.set(round(existencia_anterior-volume))
             self.mo_percent.set(morlas.percent())
+
+    def guardar(self):
+        update_existencia(villa_cuba, villa_cuba.stock, villa_cuba.height_cm)
+        update_existencia(casas, casas.stock, casas.height_cm)
+        update_existencia(morlas, morlas.stock, morlas.height_cm)
+        self.barra_estado['text'] = 'Actualizado correctamente'
+        self.root.after(2000,
+                        lambda: self.barra_estado.config(text=self.mensaje))
+
+    def entrada(self):
+        entrada = Toplevel()
+        entrada.title('Entrada')
+        entrada.resizable(0, 0)
+
+        tanques_label = Label(entrada,
+                              text='Seleccione el Tanque:')
+        vc = Radiobutton(entrada, text='Villa Cuba',
+                         variable=self.localizacion_entrada,
+                         value='vc')
+        cs = Radiobutton(entrada, text='Casas',
+                         variable=self.localizacion_entrada,
+                         value='cs')
+        mo = Radiobutton(entrada, text='Las Morlas',
+                         variable=self.localizacion_entrada,
+                         value='mo')
+        l_entrada = Label(entrada, text='Entrada:')
+        e_entrada = Entry(entrada, textvariable=self.entrada_litros,
+                          width=10)
+        b_aceptar = Button(entrada, text='Confirmar',
+                           command=self.confirmar_entrada)
+        b_salir = Button(entrada, text='Salir',
+                         command=entrada.destroy)
+        separador = Separator(entrada, orient='horizontal')
+
+        tanques_label.grid(column=0, row=0, padx=5, pady=5)
+        vc.grid(column=1, row=0, padx=5, pady=5,
+                sticky='w')
+        cs.grid(column=1, row=1, padx=5, pady=5,
+                sticky='w')
+        mo.grid(column=1, row=2, padx=5, pady=5,
+                sticky='w')
+        l_entrada.grid(column=0, row=3, padx=5, pady=5)
+        e_entrada.grid(column=1, row=3, padx=5, pady=5)
+        separador.grid(column=0, row=4, padx=5, pady=5,
+                       columnspan=2, sticky='ew')
+        b_aceptar.grid(column=0, row=5, padx=5, pady=5)
+        b_salir.grid(column=1, row=5, padx=5, pady=5)
+
+        entrada.transient(self.root)
+        entrada.grab_set()
+        entrada.bind('<Return>', lambda _: self.confirmar_entrada())
+
+        e_entrada.bind('<Button-1>', lambda _: self.entrada_litros.set(''))
+
+        self.root.wait_window(entrada)
+
+    def confirmar_entrada(self):
+        try:
+            entrada = self.entrada_litros.get()
+        except:
+            self.barra_estado['text'] = 'Introduzca la entrada en litros'
+            self.root.after(4000,
+                            lambda: self.barra_estado.config(text=self.mensaje))
+            return 1
+
+        if self.localizacion_entrada.get() == 'vc':
+            villa_cuba.stock += entrada
+            update_existencia(villa_cuba, villa_cuba.stock,
+                              villa_cuba.height_cm)
+
+        elif self.localizacion_entrada.get() == 'cs':
+            casas.stock += entrada
+            update_existencia(casas, casas.stock, casas.height_cm)
+
+        else:
+            morlas.stock += entrada
+            update_existencia(morlas, morlas.stock, morlas.height_cm)
+
+        self.actualizar_valores()
+        self.barra_estado['text'] = 'Actualizado correctamente'
+        self.root.after(2000,
+                        lambda: self.barra_estado.config(text=self.mensaje))
+
+    def valor_inicial(self):
+        ventana = Toplevel()
+        ventana.title = 'Valor inicial'
+        ventana.resizable(0, 0)
+
+        label = Label(ventana, text='Establecer valor inicial')
+        vc = Radiobutton(ventana, text='Villa Cuba',
+                         variable=self.localizacion_entrada,
+                         value='vc')
+        cs = Radiobutton(ventana, text='Casas',
+                         variable=self.localizacion_entrada,
+                         value='cs')
+        mo = Radiobutton(ventana, text='Las Morlas',
+                         variable=self.localizacion_entrada,
+                         value='mo')
+        l_entrada = Label(ventana, text='Entrada:')
+        e_entrada = Entry(ventana, textvariable=self.entrada_litros,
+                          width=10)
+        b_aceptar = Button(ventana, text='Confirmar',
+                           command=self.establecer_valor_inicial)
+        b_salir = Button(ventana, text='Salir',
+                         command=ventana.destroy)
+        separador = Separator(ventana, orient='horizontal')
+
+        label.grid(column=0, row=0, padx=5, pady=5)
+        vc.grid(column=1, row=0, padx=5, pady=5,
+                sticky='w')
+        cs.grid(column=1, row=1, padx=5, pady=5,
+                sticky='w')
+        mo.grid(column=1, row=2, padx=5, pady=5,
+                sticky='w')
+        l_entrada.grid(column=0, row=3, padx=5, pady=5)
+        e_entrada.grid(column=1, row=3, padx=5, pady=5)
+        separador.grid(column=0, row=4, padx=5, pady=5,
+                       columnspan=2, sticky='ew')
+        b_aceptar.grid(column=0, row=5, padx=5, pady=5)
+        b_salir.grid(column=1, row=5, padx=5, pady=5)
+
+        ventana.transient(self.root)
+        ventana.grab_set()
+        ventana.bind('<Return>', lambda _: self.establecer_valor_inicial())
+
+        e_entrada.bind('<Button-1>', lambda _: self.entrada_litros.set(''))
+
+        self.root.wait_window(ventana)
+
+    def establecer_valor_inicial(self):
+        try:
+            entrada = self.entrada_litros.get()
+        except:
+            self.barra_estado['text'] = 'Introduzca el valor inicial en litros'
+            self.root.after(4000,
+                            lambda: self.barra_estado.config(text=self.mensaje))
+            return 1
+
+        if self.localizacion_entrada.get() == 'vc':
+            villa_cuba.stock = entrada
+            update_existencia(villa_cuba, villa_cuba.stock,
+                              villa_cuba.height_cm)
+
+        elif self.localizacion_entrada.get() == 'cs':
+            casas.stock = entrada
+            update_existencia(casas, casas.stock, casas.height_cm)
+
+        else:
+            morlas.stock = entrada
+            update_existencia(morlas, morlas.stock, morlas.height_cm)
+
+        self.actualizar_valores()
+        self.barra_estado['text'] = 'Actualizado correctamente'
+        self.root.after(2000,
+                        lambda: self.barra_estado.config(text=self.mensaje))
 
 
 def main():

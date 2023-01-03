@@ -1,6 +1,6 @@
 import math
 import sys
-from db_scripts import extract_existencia, update_existencia
+from db_scripts import extract_existencia
 
 class TankException(Exception):
     pass
@@ -33,7 +33,6 @@ class Tank:
         self.stock = round(volume, 1)
         self.height_cm *= 100
         self.height_cm = round(self.height_cm, 2)
-        update_existencia(self, self.stock, self.height_cm)
         return self.stock
     
     def percent(self):
