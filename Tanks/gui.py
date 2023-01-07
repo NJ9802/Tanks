@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter.ttk import *
 from db_scripts import update_existencia
 from cylinder_volume import villa_cuba, casas, morlas
+from PIL import Image, ImageTk
 
 
 class Aplicacion:
@@ -45,6 +46,9 @@ class Aplicacion:
 
         self.menu2.add_command(label='Establecer valor inicial',
                                command=self.valor_inicial)
+        self.menu2.add_command(label='Tablas de Aforo',
+                               underline=0, command=self.seleccionar_tablas,
+                               accelerator='Ctrl+t')
         self.menu2.add_command(label='Entrada de Combustible',
                                underline=0, command=self.entrada,
                                accelerator='Ctrl+e')
@@ -202,6 +206,8 @@ class Aplicacion:
         self.root.bind('<Control-g>', lambda _: self.guardar())
 
         self.root.bind('<Control-e>', lambda _: self.entrada())
+
+        self.root.bind('<Control-t>', lambda _: self.seleccionar_tablas())
 
         self.root.mainloop()
 
@@ -387,7 +393,7 @@ class Aplicacion:
         mo = Radiobutton(ventana, text='Las Morlas',
                          variable=self.localizacion_entrada,
                          value='mo')
-        l_entrada = Label(ventana, text='Entrada:')
+        l_entrada = Label(ventana, text='Valor inicial:')
         e_entrada = Entry(ventana, textvariable=self.entrada_litros,
                           width=10)
         b_aceptar = Button(ventana, text='Confirmar',
@@ -444,6 +450,74 @@ class Aplicacion:
         self.barra_estado['text'] = 'Actualizado correctamente'
         self.root.after(2000,
                         lambda: self.barra_estado.config(text=self.mensaje))
+
+    def seleccionar_tablas(self):
+        ventana = Toplevel()
+        ventana.title('Seleccione una tabla')
+        ventana.resizable(0, 0)
+        ventana.geometry('180x180')
+
+        vc = Radiobutton(ventana, text='Tabla Villa Cuba',
+                         variable=self.localizacion_entrada,
+                         value='vc')
+        cs = Radiobutton(ventana, text='Tabla Las Casas',
+                         variable=self.localizacion_entrada,
+                         value='cs')
+        mo = Radiobutton(ventana, text='Tabla Las Morlas',
+                         variable=self.localizacion_entrada,
+                         value='mo')
+
+        b_ver = Button(ventana, text='Ver', command=self.ver)
+
+        vc.grid(column=0, row=0, padx=10, pady=10,
+                sticky='we')
+        cs.grid(column=0, row=1, padx=10, pady=10,
+                sticky='we')
+        mo.grid(column=0, row=2, padx=10, pady=10,
+                sticky='we')
+        b_ver.grid(column=0, row=3, padx=10, pady=10,
+                   sticky='we')
+
+        ventana.columnconfigure(0, weight=1)
+        ventana.rowconfigure(0, weight=1)
+        ventana.rowconfigure(0, weight=1)
+        ventana.rowconfigure(1, weight=1)
+        ventana.rowconfigure(3, weight=1)
+
+        ventana.bind('<Return>', lambda _: self.ver())
+
+        ventana.transient(self.root)
+
+        self.root.wait_window(ventana)
+
+    def ver(self):
+        ver = Toplevel()
+
+        if self.localizacion_entrada.get() == 'vc':
+            title = 'Tabla Villa Cuba'
+            file = 'tablas/vc.jpg'
+            img = Image.open(file).rotate(270, expand=1)
+
+        elif self.localizacion_entrada.get() == 'cs':
+            title = 'Tabla Las Casas'
+            file = 'tablas/cs.jpg'
+            img = Image.open(file).rotate(270, expand=1)
+
+        else:
+            title = 'Tabla Las Morlas'
+            file = 'tablas/mo.jpg'
+            img = Image.open(file).rotate(90, expand=1)
+
+        ver.title(title)
+
+        heigth = self.root.winfo_screenheight()
+        width = self.root.winfo_screenwidth()
+        self.img = ImageTk.PhotoImage(img.resize((width, heigth)))
+        l_img = Label(ver, image=self.img)
+
+        l_img.grid(column=0, row=0)
+
+        self.root.wait_window(ver)
 
 
 def main():
