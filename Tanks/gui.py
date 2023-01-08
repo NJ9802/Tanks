@@ -11,6 +11,12 @@ class Aplicacion:
         self.root.title('Calculo de Combustible en Tanques')
         self.root.resizable(0, 0)
         self.root.option_add('*tearOff', False)
+        self.root.tk.call('lappend', 'auto_path',
+                          'themes/tkBreeze-master')
+        self.estilo = Style()
+        self.estilo.theme_use('breeze-dark')
+        self.estilo.configure('variable.TLabel', background='#3b3b3c')
+        self.estilo.configure('dark.Vertical.TProgressbar', background='#3e3e3e')
 
         # Variables
         self.cm = DoubleVar()
@@ -59,75 +65,90 @@ class Aplicacion:
                                   border=1, relief='sunken',
                                   anchor='w')
 
-        # Widgets
-        self.medicion_cm_label = Label(self.root, text='Medicion en cm:')
-        self.medicion_cm = Entry(self.root, textvariable=self.cm, width=6)
+        # NoteBook y Frames
+        self.notebook = Notebook(self.root)
 
-        self.tanques_label = Label(self.root,
+        self.tanks_frame = Frame(self.notebook)
+        self.gee_frame = Frame(self.notebook)
+
+        self.notebook.grid()
+        self.tanks_frame.grid()
+        self.gee_frame.grid()
+
+        self.notebook.add(self.tanks_frame, text='Tanques')
+        self.notebook.add(self.gee_frame, text='GEE')
+
+        # Widgets
+        self.medicion_cm_label = Label(
+            self.tanks_frame, text='Medicion en cm:')
+        self.medicion_cm = Entry(
+            self.tanks_frame, textvariable=self.cm, width=6)
+
+        self.tanques_label = Label(self.tanks_frame,
                                    text='Seleccione el Tanque:')
-        self.tanque_vc = Radiobutton(self.root, text='Villa Cuba',
+        self.tanque_vc = Radiobutton(self.tanks_frame, text='Villa Cuba',
                                      variable=self.localizacion,
                                      value='vc',
                                      command=self.actualizar_valores)
-        self.tanque_cs = Radiobutton(self.root, text='Casas',
+        self.tanque_cs = Radiobutton(self.tanks_frame, text='Casas',
                                      variable=self.localizacion,
                                      value='cs',
                                      command=self.actualizar_valores)
-        self.tanque_mo = Radiobutton(self.root, text='Las Morlas',
+        self.tanque_mo = Radiobutton(self.tanks_frame, text='Las Morlas',
                                      variable=self.localizacion,
                                      value='mo',
                                      command=self.actualizar_valores)
 
-        self.existencia_final_label = Label(self.root,
+        self.existencia_final_label = Label(self.tanks_frame,
                                             text='Existencia Final:')
-        self.existencia_final = Label(self.root, width=10,
+        self.existencia_final = Label(self.tanks_frame, width=10,
                                       textvariable=self.existencia,
-                                      foreground='yellow', anchor='e',
-                                      background='black')
+                                    anchor='e', style='variable.TLabel')
 
-        self.existencia_anterior_label = Label(self.root,
+        self.existencia_anterior_label = Label(self.tanks_frame,
                                                text='Existencia Anterior:')
-        self.existencia_anterior_cm = Label(self.root, width=10,
+        self.existencia_anterior_cm = Label(self.tanks_frame, width=10,
                                             textvariable=self.existencia_anterior,
-                                            foreground='yellow', anchor='e',
-                                            background='black')
+                                            anchor='e', style='variable.TLabel')
 
-        self.medicion_anterior_label = Label(self.root,
+        self.medicion_anterior_label = Label(self.tanks_frame,
                                              text='Medicion Anterior:')
-        self.medicion_anterior_cm = Label(self.root, width=10,
+        self.medicion_anterior_cm = Label(self.tanks_frame, width=10,
                                           textvariable=self.medicion_anterior,
-                                          foreground='yellow', anchor='e',
-                                          background='black')
+                                        anchor='e', style='variable.TLabel')
 
-        self.gasto_combustible_label = Label(self.root,
+        self.gasto_combustible_label = Label(self.tanks_frame,
                                              text='Consumido:')
-        self.gasto_combustible = Label(self.root, width=10,
+        self.gasto_combustible = Label(self.tanks_frame, width=10,
                                        textvariable=self.consumo,
-                                       foreground='yellow', anchor='e',
-                                       background='black')
+                                       anchor='e', style='variable.TLabel')
 
-        self.boton_calcular = Button(self.root, text='Calcular',
+        self.boton_calcular = Button(self.tanks_frame, text='Calcular',
                                      command=self.calcular)
 
-        self.vc_label = Label(self.root,
+        self.vc_label = Label(self.tanks_frame,
                               text='Villa Cuba')
-        self.cs_label = Label(self.root,
+        self.cs_label = Label(self.tanks_frame,
                               text='Casas')
-        self.mo_label = Label(self.root,
+        self.mo_label = Label(self.tanks_frame,
                               text='Las Morlas')
-        self.vc_progressbar = Progressbar(orient='vertical',
+        self.vc_progressbar = Progressbar(self.tanks_frame,
+                                          orient='vertical',
                                           variable=self.vc_percent,
-                                          length=220)
-        self.cs_progressbar = Progressbar(orient='vertical',
+                                          length=270, style='dark.Vertical.TProgressbar')
+        self.cs_progressbar = Progressbar(self.tanks_frame,
+                                          orient='vertical',
                                           variable=self.cs_percent,
-                                          length=220)
-        self.mo_progressbar = Progressbar(orient='vertical',
+                                          length=270, style='dark.Vertical.TProgressbar')
+        self.mo_progressbar = Progressbar(self.tanks_frame,
+                                          orient='vertical',
                                           variable=self.mo_percent,
-                                          length=220)
+                                          length=270, style='dark.Vertical.TProgressbar')
 
-        self.separador1 = Separator(self.root, orient='horizontal')
-        self.separador2 = Separator(self.root, orient='horizontal')
-        self.separador_vertical = Separator(self.root, orient='vertical')
+        self.separador1 = Separator(self.tanks_frame, orient='horizontal')
+        self.separador2 = Separator(self.tanks_frame, orient='horizontal')
+        self.separador_vertical = Separator(
+            self.tanks_frame, orient='vertical')
 
         # Posicion
 
@@ -178,7 +199,7 @@ class Aplicacion:
         self.mo_progressbar.grid(column=5, row=1, padx=5, pady=5,
                                  rowspan=10)
 
-        self.barra_estado.grid(column=0, row=11,
+        self.barra_estado.grid(column=0, row=1,
                                columnspan=6, sticky='ew')
 
         # Funciones iniciales
@@ -309,25 +330,28 @@ class Aplicacion:
         entrada.title('Entrada')
         entrada.resizable(0, 0)
 
-        tanques_label = Label(entrada,
+        entrada_frame = Frame(entrada)
+        tanques_label = Label(entrada_frame,
                               text='Seleccione el Tanque:')
-        vc = Radiobutton(entrada, text='Villa Cuba',
+        vc = Radiobutton(entrada_frame, text='Villa Cuba',
                          variable=self.localizacion_entrada,
                          value='vc')
-        cs = Radiobutton(entrada, text='Casas',
+        cs = Radiobutton(entrada_frame, text='Casas',
                          variable=self.localizacion_entrada,
                          value='cs')
-        mo = Radiobutton(entrada, text='Las Morlas',
+        mo = Radiobutton(entrada_frame, text='Las Morlas',
                          variable=self.localizacion_entrada,
                          value='mo')
-        l_entrada = Label(entrada, text='Entrada:')
-        e_entrada = Entry(entrada, textvariable=self.entrada_litros,
+        l_entrada = Label(entrada_frame, text='Entrada:')
+        e_entrada = Entry(entrada_frame, textvariable=self.entrada_litros,
                           width=10)
-        b_aceptar = Button(entrada, text='Confirmar',
+        b_aceptar = Button(entrada_frame, text='Confirmar',
                            command=self.confirmar_entrada)
-        b_salir = Button(entrada, text='Salir',
+        b_salir = Button(entrada_frame, text='Salir',
                          command=entrada.destroy)
-        separador = Separator(entrada, orient='horizontal')
+        separador = Separator(entrada_frame, orient='horizontal')
+
+        entrada_frame.grid()
 
         tanques_label.grid(column=0, row=0, padx=5, pady=5)
         vc.grid(column=1, row=0, padx=5, pady=5,
@@ -348,6 +372,8 @@ class Aplicacion:
         entrada.bind('<Return>', lambda _: self.confirmar_entrada())
 
         e_entrada.bind('<Button-1>', lambda _: self.entrada_litros.set(''))
+
+        entrada.focus_set()
 
         self.root.wait_window(entrada)
 
@@ -383,24 +409,27 @@ class Aplicacion:
         ventana.title = 'Valor inicial'
         ventana.resizable(0, 0)
 
-        label = Label(ventana, text='Establecer valor inicial')
-        vc = Radiobutton(ventana, text='Villa Cuba',
+        ventana_frame = Frame(ventana)
+        label = Label(ventana_frame, text='Establecer valor inicial')
+        vc = Radiobutton(ventana_frame, text='Villa Cuba',
                          variable=self.localizacion_entrada,
                          value='vc')
-        cs = Radiobutton(ventana, text='Casas',
+        cs = Radiobutton(ventana_frame, text='Casas',
                          variable=self.localizacion_entrada,
                          value='cs')
-        mo = Radiobutton(ventana, text='Las Morlas',
+        mo = Radiobutton(ventana_frame, text='Las Morlas',
                          variable=self.localizacion_entrada,
                          value='mo')
-        l_entrada = Label(ventana, text='Valor inicial:')
-        e_entrada = Entry(ventana, textvariable=self.entrada_litros,
+        l_entrada = Label(ventana_frame, text='Valor inicial:')
+        e_entrada = Entry(ventana_frame, textvariable=self.entrada_litros,
                           width=10)
-        b_aceptar = Button(ventana, text='Confirmar',
+        b_aceptar = Button(ventana_frame, text='Confirmar',
                            command=self.establecer_valor_inicial)
-        b_salir = Button(ventana, text='Salir',
+        b_salir = Button(ventana_frame, text='Salir',
                          command=ventana.destroy)
-        separador = Separator(ventana, orient='horizontal')
+        separador = Separator(ventana_frame, orient='horizontal')
+
+        ventana_frame.grid()
 
         label.grid(column=0, row=0, padx=5, pady=5)
         vc.grid(column=1, row=0, padx=5, pady=5,
@@ -421,6 +450,8 @@ class Aplicacion:
         ventana.bind('<Return>', lambda _: self.establecer_valor_inicial())
 
         e_entrada.bind('<Button-1>', lambda _: self.entrada_litros.set(''))
+
+        ventana.focus_set()
 
         self.root.wait_window(ventana)
 
@@ -453,21 +484,24 @@ class Aplicacion:
 
     def seleccionar_tablas(self):
         ventana = Toplevel()
-        ventana.title('Seleccione una tabla')
+        ventana.title('Tablas cerificadas')
         ventana.resizable(0, 0)
-        ventana.geometry('180x180')
 
-        vc = Radiobutton(ventana, text='Tabla Villa Cuba',
+        ventana_frame = Frame(ventana)
+
+        vc = Radiobutton(ventana_frame, text='Tabla Villa Cuba',
                          variable=self.localizacion_entrada,
                          value='vc')
-        cs = Radiobutton(ventana, text='Tabla Las Casas',
+        cs = Radiobutton(ventana_frame, text='Tabla Las Casas',
                          variable=self.localizacion_entrada,
                          value='cs')
-        mo = Radiobutton(ventana, text='Tabla Las Morlas',
+        mo = Radiobutton(ventana_frame, text='Tabla Las Morlas',
                          variable=self.localizacion_entrada,
                          value='mo')
 
-        b_ver = Button(ventana, text='Ver', command=self.ver)
+        b_ver = Button(ventana_frame, text='Ver', command=self.ver)
+
+        ventana_frame.grid(sticky='swe')
 
         vc.grid(column=0, row=0, padx=10, pady=10,
                 sticky='we')
@@ -487,6 +521,7 @@ class Aplicacion:
         ventana.bind('<Return>', lambda _: self.ver())
 
         ventana.transient(self.root)
+        ventana.focus_set()
 
         self.root.wait_window(ventana)
 
@@ -516,6 +551,8 @@ class Aplicacion:
         l_img = Label(ver, image=self.img)
 
         l_img.grid(column=0, row=0)
+
+        ver.focus_set()
 
         self.root.wait_window(ver)
 
