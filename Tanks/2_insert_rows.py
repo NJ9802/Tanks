@@ -18,3 +18,21 @@ try:
 	print("Tanques insertados correctamente")
 except sqlite3.OperationalError as error:
 	print("Error al abrir:", error)
+
+try:
+	bd = sqlite3.connect("combustible.db")
+	cursor = bd.cursor()
+	sentence = [
+		"""
+		INSERT INTO darkmode
+		(dark)
+		VALUES
+		(1);
+		"""
+	]
+	for sentencia in sentence:
+		cursor.execute(sentencia);
+	bd.commit() #Guardamos los cambios al terminar el ciclo
+	print("dark insertado correctamente")
+except sqlite3.OperationalError as error:
+	print("Error al abrir:", error)

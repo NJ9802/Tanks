@@ -44,3 +44,37 @@ def extract_existencia(tank):
 
     except sqlite3.OperationalError as error:
         print("Error al abrir:", error)
+
+def check_darkmode():
+    try:
+
+        # Conectar a la base de datos
+        bd = sqlite3.connect("combustible.db")
+        cursor = bd.cursor()
+
+        cursor.execute('SELECT dark FROM darkmode;')
+        dark = cursor.fetchone()[0]
+        return dark
+
+    except sqlite3.OperationalError as error:
+        print("Error al abrir:", error)
+
+def update_darkmode(dark):
+    try:
+
+        # Conectar a la base de datos
+        bd = sqlite3.connect("combustible.db")
+        cursor = bd.cursor()
+
+        # Sentencia para actualizar
+        sentencia1 = "UPDATE darkmode SET dark = ?;"
+
+
+        # Actualizar datos
+        cursor.execute(sentencia1, (str(dark)))
+
+        bd.commit()
+
+    except sqlite3.OperationalError as error:
+        print("Error al abrir:", error)
+

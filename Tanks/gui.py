@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter.ttk import *
-from db_scripts import update_existencia
+from db_scripts import update_existencia, check_darkmode, update_darkmode
 from cylinder_volume import villa_cuba, casas, morlas
 from PIL import Image, ImageTk
 
@@ -14,9 +14,7 @@ class Aplicacion:
         self.root.tk.call('lappend', 'auto_path',
                           'themes/tkBreeze-master')
         self.estilo = Style()
-        self.estilo.theme_use('breeze-dark')
-        self.estilo.configure('variable.TLabel', background='#3b3b3c')
-        self.estilo.configure('dark.Vertical.TProgressbar', background='#3e3e3e')
+
 
         # Variables
         self.cm = DoubleVar()
@@ -30,24 +28,39 @@ class Aplicacion:
         self.medicion_anterior = DoubleVar()
         self.entrada_litros = DoubleVar()
         self.localizacion_entrada = StringVar(value='vc')
+        self.modo_oscuro = BooleanVar()
+        
+        # Chequear si estaba activado el modo oscuro
+        if check_darkmode() == 1:
+            self.estilo.theme_use('breeze-dark')
+            self.estilo.configure('variable.TLabel', background='#3b3b3c')
+            self.estilo.configure(
+                'dark.Vertical.TProgressbar', background='#3e3e3e')
+            self.modo_oscuro.set(1)
+
+        else:
+            self.estilo.theme_use('breeze')
+
 
         # Menu
-        barramenu = Menu(self.root)
-        self.root['menu'] = barramenu
-        self.menu1 = Menu(barramenu)
-        self.menu2 = Menu(barramenu)
+        self.barramenu = Menu(self.root)
+        self.root['menu'] = self.barramenu
+        self.menu1 = Menu(self.barramenu)
+        self.menu2 = Menu(self.barramenu)
+        self.menu3 = Menu(self.barramenu)
 
-        barramenu.add_cascade(menu=self.menu1,
+        self.barramenu.add_cascade(menu=self.menu1,
                               label='Archivo')
-        barramenu.add_cascade(menu=self.menu2,
+        self.barramenu.add_cascade(menu=self.menu2,
                               label='Opciones')
+        self.barramenu.add_cascade(menu=self.menu3, label='Estilo')
 
         self.menu1.add_command(label='Guardar',
                                command=self.guardar, underline=0,
                                accelerator='Ctrl+g')
         self.menu1.add_separator()
         self.menu1.add_command(label='Salir',
-                               command=quit, underline=0,
+                               command=lambda: self.root.destroy(), underline=0,
                                accelerator='Alt+F4')
 
         self.menu2.add_command(label='Establecer valor inicial',
@@ -58,6 +71,9 @@ class Aplicacion:
         self.menu2.add_command(label='Entrada de Combustible',
                                underline=0, command=self.entrada,
                                accelerator='Ctrl+e')
+
+        self.menu3.add_checkbutton(label='Modo oscuro', variable=self.modo_oscuro,
+                                   onvalue=1, offvalue=0, command=self.switch_darkmode)
 
         # Barra de estado
         self.mensaje = 'Hecho por Nelson J. Aldazabal Hernandez. Colaborador Maykel'
@@ -103,7 +119,7 @@ class Aplicacion:
                                             text='Existencia Final:')
         self.existencia_final = Label(self.tanks_frame, width=10,
                                       textvariable=self.existencia,
-                                    anchor='e', style='variable.TLabel')
+                                      anchor='e', style='variable.TLabel')
 
         self.existencia_anterior_label = Label(self.tanks_frame,
                                                text='Existencia Anterior:')
@@ -115,7 +131,7 @@ class Aplicacion:
                                              text='Medicion Anterior:')
         self.medicion_anterior_cm = Label(self.tanks_frame, width=10,
                                           textvariable=self.medicion_anterior,
-                                        anchor='e', style='variable.TLabel')
+                                          anchor='e', style='variable.TLabel')
 
         self.gasto_combustible_label = Label(self.tanks_frame,
                                              text='Consumido:')
@@ -233,6 +249,15 @@ class Aplicacion:
         self.root.mainloop()
 
     # Metodos de la Aplicacion
+    def switch_darkmode(self):
+        if self.modo_oscuro.get() == 0:
+            self.estilo.theme_use('breeze')
+            update_darkmode(0)
+
+        else:
+            self.estilo.theme_use('breeze-dark')
+            update_darkmode(1)                
+    
     def limpiar_cm(self, event):
         self.cm.set('')
 
@@ -484,7 +509,7 @@ class Aplicacion:
 
     def seleccionar_tablas(self):
         ventana = Toplevel()
-        ventana.title('Tablas cerificadas')
+        ventana.title('Tablas certificadas')
         ventana.resizable(0, 0)
 
         ventana_frame = Frame(ventana)
