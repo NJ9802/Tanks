@@ -1,8 +1,12 @@
 from tkinter import *
+from tkinter import messagebox
 from tkinter.ttk import *
+from tkcalendar import DateEntry
 from db_scripts import update_existencia, check_darkmode, update_darkmode
-from cylinder_volume import villa_cuba, casas, morlas
+from cylinder_volume import villa_cuba, casas, morlas, mt_487, mt_488, mt_443, mt_489, mt_452
 from PIL import Image, ImageTk
+from models import Gee
+from validations import validate_time, validate_numeric_entry
 
 
 class Aplicacion:
@@ -15,8 +19,7 @@ class Aplicacion:
                           'themes/tkBreeze-master')
         self.estilo = Style()
 
-
-        # Variables
+        # Tanks Variables
         self.cm = DoubleVar()
         self.localizacion = StringVar(value='vc')
         self.existencia = DoubleVar()
@@ -28,8 +31,18 @@ class Aplicacion:
         self.medicion_anterior = DoubleVar()
         self.entrada_litros = DoubleVar()
         self.localizacion_entrada = StringVar(value='vc')
+
+        # GEE variables
+        self.horametro_mt487 = DoubleVar()
+        self.horametro_mt488 = DoubleVar()
+        self.horametro_mt489 = DoubleVar()
+        self.horametro_mt443 = DoubleVar()
+        self.horametro_mt452 = DoubleVar()
+
+        self.gee = StringVar(value='MT-487')
+
         self.modo_oscuro = BooleanVar()
-        
+
         # Chequear si estaba activado el modo oscuro
         if check_darkmode() == 1:
             self.estilo.theme_use('breeze-dark')
@@ -41,7 +54,6 @@ class Aplicacion:
         else:
             self.estilo.theme_use('breeze')
 
-
         # Menu
         self.barramenu = Menu(self.root)
         self.root['menu'] = self.barramenu
@@ -50,9 +62,9 @@ class Aplicacion:
         self.menu3 = Menu(self.barramenu)
 
         self.barramenu.add_cascade(menu=self.menu1,
-                              label='Archivo')
+                                   label='Archivo')
         self.barramenu.add_cascade(menu=self.menu2,
-                              label='Opciones')
+                                   label='Opciones')
         self.barramenu.add_cascade(menu=self.menu3, label='Estilo')
 
         self.menu1.add_command(label='Guardar',
@@ -73,10 +85,10 @@ class Aplicacion:
                                accelerator='Ctrl+e')
 
         self.menu3.add_checkbutton(label='Modo oscuro', variable=self.modo_oscuro,
-                                   onvalue=1, offvalue=0, command=self.switch_darkmode)
+                                   command=self.switch_darkmode)
 
         # Barra de estado
-        self.mensaje = 'Hecho por Nelson J. Aldazabal Hernandez. Colaborador Maykel'
+        self.mensaje = 'Hecho por Nelson J. Aldazabal Hernandez.'
         self.barra_estado = Label(self.root, text=self.mensaje,
                                   border=1, relief='sunken',
                                   anchor='w')
@@ -94,7 +106,7 @@ class Aplicacion:
         self.notebook.add(self.tanks_frame, text='Tanques')
         self.notebook.add(self.gee_frame, text='GEE')
 
-        # Widgets
+        # Tanks Widgets
         self.medicion_cm_label = Label(
             self.tanks_frame, text='Medicion en cm:')
         self.medicion_cm = Entry(
@@ -166,7 +178,39 @@ class Aplicacion:
         self.separador_vertical = Separator(
             self.tanks_frame, orient='vertical')
 
-        # Posicion
+        # GEE Widgets
+        self.gee_label = Label(self.gee_frame, text='Grupos Electrogenos')
+        self.horametro_label = Label(self.gee_frame, text='Horametro')
+
+        self.mt487_radiobutton = Radiobutton(self.gee_frame, text='MT-487', variable=self.gee,
+                                             value='MT-487')
+        self.mt488_radiobutton = Radiobutton(self.gee_frame, text='MT-488', variable=self.gee,
+                                             value='MT-488')
+        self.mt489_radiobutton = Radiobutton(self.gee_frame, text='MT-489', variable=self.gee,
+                                             value='MT-489')
+        self.mt443_radiobutton = Radiobutton(self.gee_frame, text='MT-443', variable=self.gee,
+                                             value='MT-443')
+        self.mt452_radiobutton = Radiobutton(self.gee_frame, text='MT-452', variable=self.gee,
+                                             value='MT-452')
+
+        self.mt487_horametro_label = Label(
+            self.gee_frame, textvariable=self.horametro_mt487)
+        self.mt488_horametro_label = Label(
+            self.gee_frame, textvariable=self.horametro_mt488)
+        self.mt489_horametro_label = Label(
+            self.gee_frame, textvariable=self.horametro_mt489)
+        self.mt443_horametro_label = Label(
+            self.gee_frame, textvariable=self.horametro_mt443)
+        self.mt452_horametro_label = Label(
+            self.gee_frame, textvariable=self.horametro_mt452)
+
+        self.gee_separator = Separator(self.gee_frame, orient='horizontal')
+
+        self.operacion_button = Button(
+            self.gee_frame, text='Operacion', command=self.operacion)
+        self.info_button = Button(self.gee_frame, text='Informacion')
+
+        # Tanks Posicion
 
         self.tanques_label.grid(column=0, row=0, padx=10, pady=10)
         self.tanque_vc.grid(column=1, row=0, padx=10, pady=10, sticky='w')
@@ -180,7 +224,7 @@ class Aplicacion:
         self.medicion_anterior_cm.grid(column=1, row=4, padx=10, pady=10)
 
         self.medicion_cm_label.grid(column=0, row=5, padx=10, pady=10)
-        self.medicion_cm.grid(column=1, row=5, padx=10, pady=10)
+        self.medicion_cm.grid(column=1, row=5, sticky='e', padx=10, pady=10)
 
         self.separador2.grid(column=0, row=6, columnspan=2,
                              padx=5, pady=5, sticky="ew")
@@ -218,6 +262,39 @@ class Aplicacion:
         self.barra_estado.grid(column=0, row=1,
                                columnspan=6, sticky='ew')
 
+        # GEE position
+        self.gee_label.grid(column=0, row=0, pady=10, padx=10)
+        self.horametro_label.grid(column=1, row=0, pady=10, padx=10)
+
+        self.mt487_radiobutton.grid(column=0, row=1)
+        self.mt488_radiobutton.grid(column=0, row=2)
+        self.mt489_radiobutton.grid(column=0, row=3)
+        self.mt443_radiobutton.grid(column=0, row=4)
+        self.mt452_radiobutton.grid(column=0, row=5)
+
+        self.mt487_horametro_label.grid(column=1, row=1)
+        self.mt488_horametro_label.grid(column=1, row=2)
+        self.mt489_horametro_label.grid(column=1, row=3)
+        self.mt443_horametro_label.grid(column=1, row=4)
+        self.mt452_horametro_label.grid(column=1, row=5)
+
+        self.gee_separator.grid(
+            column=0, row=6, columnspan=2, sticky='we', pady=10, padx=10)
+
+        self.operacion_button.grid(column=0, row=7, pady=10, padx=10)
+        self.info_button.grid(column=1, row=7, pady=10, padx=10)
+
+        self.gee_frame.columnconfigure(0, weight=1)
+        self.gee_frame.columnconfigure(1, weight=1)
+        self.gee_frame.rowconfigure(0, weight=1)
+        self.gee_frame.rowconfigure(1, weight=1)
+        self.gee_frame.rowconfigure(2, weight=1)
+        self.gee_frame.rowconfigure(3, weight=1)
+        self.gee_frame.rowconfigure(4, weight=1)
+        self.gee_frame.rowconfigure(5, weight=1)
+        self.gee_frame.rowconfigure(6, weight=1)
+        self.gee_frame.rowconfigure(7, weight=1)
+
         # Funciones iniciales
 
         # Valor inicial de medicion anterior y existencia anterior
@@ -237,7 +314,7 @@ class Aplicacion:
         self.medicion_cm.bind('<Button-1>', self.limpiar_cm)
 
         # Calcular al presionar ENTER
-        self.root.bind('<Return>', self.enter)
+        self.medicion_cm.bind('<Return>', lambda _: self.calcular())
 
         # Guardar
         self.root.bind('<Control-g>', lambda _: self.guardar())
@@ -250,19 +327,16 @@ class Aplicacion:
 
     # Metodos de la Aplicacion
     def switch_darkmode(self):
-        if self.modo_oscuro.get() == 0:
+        if not self.modo_oscuro.get():
             self.estilo.theme_use('breeze')
             update_darkmode(0)
 
         else:
             self.estilo.theme_use('breeze-dark')
-            update_darkmode(1)                
-    
+            update_darkmode(1)
+
     def limpiar_cm(self, event):
         self.cm.set('')
-
-    def enter(self, event):
-        self.calcular()
 
     def actualizar_valores(self):
         self.existencia.set(0.0)
@@ -319,7 +393,7 @@ class Aplicacion:
                                 lambda: self.barra_estado.config(text=self.mensaje))
                 return 1
 
-            existencia_anterior = casas.stock
+            existencia_anterior = self.existencia_anterior.get()
             volume = casas.volume(cm)
 
             self.existencia.set(volume)
@@ -335,7 +409,7 @@ class Aplicacion:
                                 lambda: self.barra_estado.config(text=self.mensaje))
                 return 1
 
-            existencia_anterior = morlas.stock
+            existencia_anterior = self.existencia_anterior.get()
             volume = morlas.volume(cm)
 
             self.existencia.set(volume)
@@ -580,6 +654,210 @@ class Aplicacion:
         ver.focus_set()
 
         self.root.wait_window(ver)
+
+    # Metodos GEE
+    def operacion(self):
+        ventana = Toplevel()
+        ventana.title('Operacion')
+        ventana.resizable(0, 0)
+
+        # variables
+        self.fecha = StringVar()
+        self.var_hora_inicial = StringVar()
+        self.var_hora_final = StringVar()
+        self.var_horametro_inicial = StringVar()
+        self.var_horametro_final = StringVar()
+        self.var_tiempo_horas = DoubleVar()
+        self.var_energia_generada = DoubleVar()
+        self.var_demanda_liberada = DoubleVar()
+        self.var_consumo = DoubleVar()
+        self.horametro_roto = BooleanVar()
+
+        mt = self.gee.get()
+
+        if mt == 'MT-487':
+            self.gee_obj = mt_487
+
+        elif mt == 'MT-488':
+            self.gee_obj = mt_488
+
+        elif mt == 'MT-489':
+            self.gee_obj = mt_489
+
+        elif mt == 'MT-443':
+            self.gee_obj = mt_443
+
+        else:
+            self.gee_obj = mt_452
+
+        self.var_horametro_inicial.set(self.gee_obj.horametro)
+
+        mt_label = Label(ventana, text=self.gee_obj)
+        fecha_label = Label(ventana, text='Fecha')
+        tipo_de_operacion = Label(ventana, text='Tipo')
+        hora_de_inicio = Label(ventana, text='Hora Inicio (HH:MM)')
+        hora_final = Label(ventana, text='Hora Final (HH:MM)')
+        horametro_inicial = Label(ventana, text='Horametro inicial')
+        horametro_final = Label(ventana, text='Horametro final')
+        tiempo_horas = Label(ventana, text='Tiempo Horas', state='readonly')
+        energia_generada = Label(ventana, text='Energia Generada')
+        demanda_liberada = Label(ventana, text='Demanda Liberada')
+        consumo = Label(ventana, text='Consumo')
+        l_horametro_roto = Label(ventana, text='Horametro Roto')
+        existencia_final = Label(ventana, text='Existencia Final')
+
+        self.e_fecha = DateEntry(
+            ventana, state='readonly', width=8, date_pattern='dd/mm/yy')
+        e_hora_inicial = Entry(
+            ventana, textvariable=self.var_hora_inicial, width=8, validate='key',
+            validatecommand=(self.root.register(validate_time), '%P'))
+        self.e_hora_final = Entry(
+            ventana, textvariable=self.var_hora_final, width=8, state='readonly',
+            validate='key',
+            validatecommand=(self.root.register(validate_time), '%P'))
+        self.e_tipo = Combobox(ventana, values=[
+            'PS', 'PC', 'IA', 'LD', 'SS', 'GA', 'RO', 'IU', 'LC', 'LS'], width=3,
+            state='readonly')
+        self.e_horametro_inicial = Entry(
+            ventana, textvariable=self.var_horametro_inicial, width=8, state='readonly')
+        self.e_horametro_final = Entry(
+            ventana, textvariable=self.var_horametro_final, width=8,
+            validate='key',
+            validatecommand=(self.root.register(validate_numeric_entry), '%S'))
+        e_tiempo_horas = Entry(
+            ventana, textvariable=self.var_tiempo_horas, width=8, state='readonly')
+        e_energia_generada = Entry(
+            ventana, textvariable=self.var_energia_generada, width=8, state='readonly')
+        e_demanda_liberada = Entry(
+            ventana, textvariable=self.var_demanda_liberada, width=8, state='readonly')
+        e_consumo = Entry(ventana, textvariable=self.var_consumo, width=8,
+                          validate='key',
+                          validatecommand=(self.root.register(validate_numeric_entry), '%S'))
+        w_horametro_roto = Checkbutton(
+            ventana, variable=self.horametro_roto, command=self.f_horametro_roto)
+        e_existencia_final = Entry(ventana, width=8, state='readonly')
+
+        separador1 = Separator(ventana, orient='horizontal')
+        separador2 = Separator(ventana, orient='horizontal')
+        separador3 = Separator(ventana, orient='horizontal')
+
+        button = Button(ventana, command=self.run, text='Accept')
+
+        # Position
+        mt_label.grid(column=0, row=0, columnspan=2, pady=10, padx=10)
+
+        separador1.grid(column=0, row=1, padx=10,
+                        sticky='we', columnspan=2)
+
+        l_horametro_roto.grid(column=0, row=2, pady=10, padx=10,)
+
+        separador2.grid(column=0, row=3, padx=10,
+                        sticky='we', columnspan=2)
+
+        fecha_label.grid(column=0, row=4, pady=10, padx=10, sticky='e')
+        tipo_de_operacion.grid(column=0, row=5, pady=10, padx=10, sticky='e')
+        hora_de_inicio.grid(column=0, row=6, pady=10, padx=10, sticky='e')
+        hora_final.grid(column=0, row=7, pady=10, padx=10, sticky='e')
+        horametro_inicial.grid(
+            column=0, row=8, pady=10, padx=10, sticky='e')
+        horametro_final.grid(
+            column=0, row=9, pady=10, padx=10, sticky='e')
+        tiempo_horas.grid(column=0, row=10, pady=10, padx=10, sticky='e')
+        energia_generada.grid(column=0, row=11, pady=10, padx=10, sticky='e')
+        demanda_liberada.grid(column=0, row=12, pady=10, padx=10, sticky='e')
+        consumo.grid(column=0, row=13, pady=10, padx=10, sticky='e')
+        existencia_final.grid(column=0, row=14, pady=10, padx=10, sticky='e')
+
+        w_horametro_roto.grid(column=1, row=2, padx=10, pady=10)
+        self.e_fecha.grid(column=1, row=4, padx=10, pady=10)
+        self.e_tipo.grid(column=1, row=5, padx=10, pady=10)
+        e_hora_inicial.grid(column=1, row=6, padx=10, pady=10)
+        self.e_hora_final.grid(column=1, row=7, padx=10, pady=10)
+        self.e_horametro_inicial.grid(column=1, row=8, padx=10, pady=10)
+        self.e_horametro_final.grid(column=1, row=9, padx=10, pady=10)
+        e_tiempo_horas.grid(column=1, row=10, pady=10, padx=10)
+        e_energia_generada.grid(column=1, row=11, padx=10, pady=10)
+        e_demanda_liberada.grid(column=1, row=12, padx=10, pady=10)
+        e_consumo.grid(column=1, row=13, padx=10, pady=10)
+        e_existencia_final.grid(column=1, row=14, padx=10, pady=10)
+
+        separador3.grid(column=0, row=15, padx=10,
+                        pady=10, sticky='we', columnspan=2)
+
+        button.grid(column=0, row=16, columnspan=2, padx=10, pady=10)
+
+        e_consumo.bind('<Button-1>', lambda _: self.var_consumo.set(''))
+        ventana.grab_set()
+        self.root.wait_window(ventana)
+
+    def f_horametro_roto(self):
+        if self.horametro_roto.get() == True:
+            self.e_horametro_final.configure(state='readonly')
+            self.e_hora_final.configure(state='normal')
+            self.var_horametro_inicial.set('Roto')
+            self.var_horametro_final.set('Roto')
+
+        else:
+            self.e_hora_final.configure(state='readonly')
+            self.e_horametro_final.configure(state='normal')
+            self.var_horametro_inicial.set('')
+            self.var_horametro_final.set('')
+
+    def run(self):
+        roto = self.horametro_roto.get()
+        tipo = self.e_tipo.get()
+        hora_inicial = self.var_hora_inicial.get()
+        consumo_s = self.var_consumo.get()
+
+        for index, entry in enumerate([tipo, hora_inicial, consumo_s]):
+            if not entry:
+                if index == 0:
+                    field = 'Tipo'
+                elif index == 1:
+                    field = 'Hora Inicial'
+                else:
+                    field = 'Consumo'
+
+                messagebox.showwarning(
+                    'Faltan Campos', f'El campo {field} esta vacio')
+                return 1
+
+        if roto:
+            hora_final = self.var_hora_final.get()
+
+            if not hora_final:
+                messagebox.showwarning(
+                    'Faltan Campos', 'El campo Hora Final esta vacio')
+                return 1
+
+            else:
+                response = self.gee_obj.operacion(tipo=tipo, hora_inicial=hora_inicial,
+                                         consumo=consumo_s, horametro_roto=roto, hora_final=hora_final)
+
+        else:
+            horametro = self.var_horametro_final.get()
+            if not horametro:
+                messagebox.showwarning(
+                    'Faltan Campos', 'El campo Horamemtro Final esta vacio')
+                return 1
+
+            else:
+                response = self.gee_obj.operacion(tipo=tipo, hora_inicial=hora_inicial,
+                                         consumo=consumo_s, horametro_roto=roto, horametro_final=horametro)
+
+        if type(response) == str:
+            messagebox.showerror('Error', response)
+
+        else:
+            self.var_tiempo_horas.set(response['tiempo_horas'])
+            self.var_hora_final.set(response['hora_final'])
+            self.var_energia_generada.set(response['energia_generada'])
+            self.var_demanda_liberada.set(response['demanda_liberada'])
+
+            if response['sobreconsumo']:
+                messagebox.showwarning('Sobreconsumo', 'Existe sobreconsumo en la operacion')
+
+
 
 
 def main():

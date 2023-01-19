@@ -13,7 +13,7 @@ try:
 		"""
 	]
 	for sentencia in tanks:
-		cursor.execute(sentencia);
+		cursor.execute(sentencia)
 	bd.commit() #Guardamos los cambios al terminar el ciclo
 	print("Tanques insertados correctamente")
 except sqlite3.OperationalError as error:
@@ -31,7 +31,7 @@ try:
 		"""
 	]
 	for sentencia in sentence:
-		cursor.execute(sentencia);
+		cursor.execute(sentencia)
 	bd.commit() #Guardamos los cambios al terminar el ciclo
 	print("dark insertado correctamente")
 except sqlite3.OperationalError as error:

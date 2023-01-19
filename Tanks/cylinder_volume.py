@@ -1,4 +1,4 @@
-from models import Tank, sys
+from models import Tank, sys, Gee
 
 from db_scripts import update_existencia, extract_existencia
 
@@ -8,7 +8,11 @@ villa_cuba = Tank('Villa Cuba', 1.8969469/2, 7.558, 21359)
 casas =Tank('Las Casas', 0.707, 6.068, 9529)
 morlas = Tank('Las Morlas', 0.707, 6.108, 9592)
 
-
+mt_487 = Gee('MT-487', 'Villa Cuba', '1112.30', 58)
+mt_488 = Gee('MT-488', 'Villa Cuba', '197.30', 58)
+mt_489 = Gee('MT-489', 'Villa Cuba', '1212.30', 58)
+mt_443 = Gee('MT-443', 'Las Casas', 'Roto', 70)
+mt_452 = Gee('MT-452', 'Las Morlas', 'Roto', 65)
 
 
 if __name__ == '__main__':
