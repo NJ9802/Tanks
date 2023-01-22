@@ -1,18 +1,19 @@
-from models import Tank, sys, Gee
+from models import Tank, Gee, Darkmode
 
 from db_scripts import update_existencia, extract_existencia
+from db import *
 
+darkmode = session.query(Darkmode).filter_by(id=1).first()
 
+villa_cuba = session.query(Tank).filter_by(location='Villa Cuba').first()
+casas =session.query(Tank).filter_by(location='Las Casas').first()
+morlas = session.query(Tank).filter_by(location='Las Morlas').first()
 
-villa_cuba = Tank('Villa Cuba', 1.8969469/2, 7.558, 21359)
-casas =Tank('Las Casas', 0.707, 6.068, 9529)
-morlas = Tank('Las Morlas', 0.707, 6.108, 9592)
-
-mt_487 = Gee('MT-487', 'Villa Cuba', '1112.30', 58)
-mt_488 = Gee('MT-488', 'Villa Cuba', '197.30', 58)
-mt_489 = Gee('MT-489', 'Villa Cuba', '1212.30', 58)
-mt_443 = Gee('MT-443', 'Las Casas', 'Roto', 70)
-mt_452 = Gee('MT-452', 'Las Morlas', 'Roto', 65)
+mt_487 = session.query(Gee).filter_by(name='MT-487').first()
+mt_488 = session.query(Gee).filter_by(name='MT-488').first()
+mt_489 = session.query(Gee).filter_by(name='MT-489').first()
+mt_443 = session.query(Gee).filter_by(name='MT-443').first()
+mt_452 = session.query(Gee).filter_by(name='MT-452').first()
 
 
 if __name__ == '__main__':

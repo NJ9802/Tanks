@@ -2,11 +2,10 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter.ttk import *
 from tkcalendar import DateEntry
-from db_scripts import update_existencia, check_darkmode, update_darkmode
-from cylinder_volume import villa_cuba, casas, morlas, mt_487, mt_488, mt_443, mt_489, mt_452
+from cylinder_volume import villa_cuba, casas, morlas, mt_487, mt_488, mt_443, mt_489, mt_452, darkmode
 from PIL import Image, ImageTk
-from models import Gee
 from validations import validate_time, validate_numeric_entry
+from db_main import update_darkmode, update_stock
 
 
 class Aplicacion:
@@ -44,7 +43,7 @@ class Aplicacion:
         self.modo_oscuro = BooleanVar()
 
         # Chequear si estaba activado el modo oscuro
-        if check_darkmode() == 1:
+        if darkmode.on == 1:
             self.estilo.theme_use('breeze-dark')
             self.estilo.configure('variable.TLabel', background='#3b3b3c')
             self.estilo.configure(
@@ -88,7 +87,7 @@ class Aplicacion:
                                    command=self.switch_darkmode)
 
         # Barra de estado
-        self.mensaje = 'Hecho por Nelson J. Aldazabal Hernandez.'
+        self.mensaje = ' Hecho por Nelson J. Aldazabal Hernandez.'
         self.barra_estado = Label(self.root, text=self.mensaje,
                                   border=1, relief='sunken',
                                   anchor='w')
@@ -279,10 +278,10 @@ class Aplicacion:
         self.mt452_horametro_label.grid(column=1, row=5)
 
         self.gee_separator.grid(
-            column=0, row=6, columnspan=2, sticky='we', pady=10, padx=10)
+            column=0, row=6, columnspan=2, sticky='we', padx=10)
 
-        self.operacion_button.grid(column=0, row=7, pady=10, padx=10)
-        self.info_button.grid(column=1, row=7, pady=10, padx=10)
+        self.operacion_button.grid(column=0, row=7, padx=10)
+        self.info_button.grid(column=1, row=7, padx=10)
 
         self.gee_frame.columnconfigure(0, weight=1)
         self.gee_frame.columnconfigure(1, weight=1)
@@ -329,11 +328,11 @@ class Aplicacion:
     def switch_darkmode(self):
         if not self.modo_oscuro.get():
             self.estilo.theme_use('breeze')
-            update_darkmode(0)
+            update_darkmode(False)
 
         else:
             self.estilo.theme_use('breeze-dark')
-            update_darkmode(1)
+            update_darkmode(True)
 
     def limpiar_cm(self, event):
         self.cm.set('')
@@ -417,9 +416,9 @@ class Aplicacion:
             self.mo_percent.set(morlas.percent())
 
     def guardar(self):
-        update_existencia(villa_cuba, villa_cuba.stock, villa_cuba.height_cm)
-        update_existencia(casas, casas.stock, casas.height_cm)
-        update_existencia(morlas, morlas.stock, morlas.height_cm)
+        update_stock(villa_cuba)
+        update_stock(casas)
+        update_stock(morlas)
         self.barra_estado['text'] = 'Actualizado correctamente'
         self.root.after(2000,
                         lambda: self.barra_estado.config(text=self.mensaje))
@@ -487,16 +486,18 @@ class Aplicacion:
 
         if self.localizacion_entrada.get() == 'vc':
             villa_cuba.stock += entrada
-            update_existencia(villa_cuba, villa_cuba.stock,
-                              villa_cuba.height_cm)
+            update_stock(villa_cuba)
+            self.vc_percent.set(villa_cuba.percent())
 
         elif self.localizacion_entrada.get() == 'cs':
             casas.stock += entrada
-            update_existencia(casas, casas.stock, casas.height_cm)
+            update_stock(casas)
+            self.cs_percent.set(casas.percent())
 
         else:
             morlas.stock += entrada
-            update_existencia(morlas, morlas.stock, morlas.height_cm)
+            update_stock(morlas)
+            self.mo_percent.set(morlas.percent())
 
         self.actualizar_valores()
         self.barra_estado['text'] = 'Actualizado correctamente'
@@ -565,16 +566,18 @@ class Aplicacion:
 
         if self.localizacion_entrada.get() == 'vc':
             villa_cuba.stock = entrada
-            update_existencia(villa_cuba, villa_cuba.stock,
-                              villa_cuba.height_cm)
+            update_stock(villa_cuba)
+            self.vc_percent.set(villa_cuba.percent())
 
         elif self.localizacion_entrada.get() == 'cs':
             casas.stock = entrada
-            update_existencia(casas, casas.stock, casas.height_cm)
+            update_stock(casas)
+            self.cs_percent.set(casas.percent())
 
         else:
             morlas.stock = entrada
-            update_existencia(morlas, morlas.stock, morlas.height_cm)
+            update_stock(morlas)
+            self.mo_percent.set(morlas.percent())
 
         self.actualizar_valores()
         self.barra_estado['text'] = 'Actualizado correctamente'
@@ -672,6 +675,7 @@ class Aplicacion:
         self.var_demanda_liberada = DoubleVar()
         self.var_consumo = DoubleVar()
         self.horametro_roto = BooleanVar()
+        self.var_existencia = DoubleVar()
 
         mt = self.gee.get()
 
@@ -735,7 +739,8 @@ class Aplicacion:
                           validatecommand=(self.root.register(validate_numeric_entry), '%S'))
         w_horametro_roto = Checkbutton(
             ventana, variable=self.horametro_roto, command=self.f_horametro_roto)
-        e_existencia_final = Entry(ventana, width=8, state='readonly')
+        e_existencia_final = Entry(
+            ventana, textvariable=self.var_existencia, width=8, state='readonly')
 
         separador1 = Separator(ventana, orient='horizontal')
         separador2 = Separator(ventana, orient='horizontal')
@@ -769,7 +774,6 @@ class Aplicacion:
         existencia_final.grid(column=0, row=14, pady=10, padx=10, sticky='e')
 
         w_horametro_roto.grid(column=1, row=2, padx=10, pady=10)
-        self.e_fecha.grid(column=1, row=4, padx=10, pady=10)
         self.e_tipo.grid(column=1, row=5, padx=10, pady=10)
         e_hora_inicial.grid(column=1, row=6, padx=10, pady=10)
         self.e_hora_final.grid(column=1, row=7, padx=10, pady=10)
@@ -786,12 +790,16 @@ class Aplicacion:
 
         button.grid(column=0, row=16, columnspan=2, padx=10, pady=10)
 
+        if self.gee_obj.horametro == 'Roto':
+            self.horametro_roto.set(True)
+            self.f_horametro_roto()
+
         e_consumo.bind('<Button-1>', lambda _: self.var_consumo.set(''))
         ventana.grab_set()
         self.root.wait_window(ventana)
 
     def f_horametro_roto(self):
-        if self.horametro_roto.get() == True:
+        if self.horametro_roto.get():
             self.e_horametro_final.configure(state='readonly')
             self.e_hora_final.configure(state='normal')
             self.var_horametro_inicial.set('Roto')
@@ -800,7 +808,7 @@ class Aplicacion:
         else:
             self.e_hora_final.configure(state='readonly')
             self.e_horametro_final.configure(state='normal')
-            self.var_horametro_inicial.set('')
+            self.var_horametro_inicial.set(self.gee_obj.horametro)
             self.var_horametro_final.set('')
 
     def run(self):
@@ -832,7 +840,7 @@ class Aplicacion:
 
             else:
                 response = self.gee_obj.operacion(tipo=tipo, hora_inicial=hora_inicial,
-                                         consumo=consumo_s, horametro_roto=roto, hora_final=hora_final)
+                                                  consumo=consumo_s, horametro_roto=roto, hora_final=hora_final)
 
         else:
             horametro = self.var_horametro_final.get()
@@ -843,7 +851,7 @@ class Aplicacion:
 
             else:
                 response = self.gee_obj.operacion(tipo=tipo, hora_inicial=hora_inicial,
-                                         consumo=consumo_s, horametro_roto=roto, horametro_final=horametro)
+                                                  consumo=consumo_s, horametro_roto=roto, horametro_final=horametro)
 
         if type(response) == str:
             messagebox.showerror('Error', response)
@@ -853,11 +861,11 @@ class Aplicacion:
             self.var_hora_final.set(response['hora_final'])
             self.var_energia_generada.set(response['energia_generada'])
             self.var_demanda_liberada.set(response['demanda_liberada'])
+            self.var_existencia.set(self.gee_obj.tank.stock)
 
             if response['sobreconsumo']:
-                messagebox.showwarning('Sobreconsumo', 'Existe sobreconsumo en la operacion')
-
-
+                messagebox.showwarning(
+                    'Sobreconsumo', 'Existe sobreconsumo en la operacion')
 
 
 def main():

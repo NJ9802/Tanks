@@ -1,25 +1,34 @@
 import math
-import sys
-from db_scripts import extract_existencia
 import datetime
 
+from db import Base
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
+from sqlalchemy.orm import relationship
 
-class Tank:
-    def __init__(self, location, radio, large, capacity):
+
+class Tank(Base):
+    __tablename__ = 'tanks'
+
+    id = Column(Integer, primary_key=True)
+    location = Column(String, nullable=False)
+    radio = Column(Float, nullable=False)
+    large = Column(Float, nullable=False)
+    capacity = Column(Float, nullable=False)
+    stock = Column(Float, nullable=False)
+    height_cm = Column(Float)
+    gees = relationship('Gee', back_populates='tank')
+
+    def __init__(self, location: str, radio: float, large: float, capacity: float, stock: float, height_cm: float):
         self.location = location
         self.radio = radio
         self.large = large
         self.capacity = capacity
-        self.stock = extract_existencia(self)['stock']
-        self.height_cm = extract_existencia(self)['height_cm']
+        self.stock = stock
+        self.height_cm = height_cm
 
     def volume(self, cm):
 
-        try:
-            self.height_cm = cm/100
-        except:
-            print('La altura debe ser un numero')
-            sys.exit(1)
+        self.height_cm = cm/100
 
         part1 = ((self.radio-self.height_cm)/self.radio)
         root = 2*self.radio*self.height_cm-self.height_cm**2
@@ -37,11 +46,26 @@ class Tank:
         percent = self.stock/self.capacity
         return percent*100
 
+    def __repr__(self):
+        return f"Tanque({self.location}, {self.stock}, {self.height_cm})"
+
     def __str__(self):
-        return self.location
+        return f'Tanque de {self.location}'
 
 
-class Gee:
+class Gee(Base):
+
+    __tablename__ = 'gee'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    location = Column(String, nullable=False)
+    horametro = Column(String, nullable=False)
+    autonomia = Column(Integer, nullable=False)
+    horametro_roto = Column(Boolean, nullable=False)
+    tanks_id = Column(Integer, ForeignKey('tanks.id'))
+    tank = relationship('Tank', back_populates='gees')
+
     def __init__(self, name: str, location: str, horametro: str, autonomia: int) -> None:
         self.name = name
         self.location = location
@@ -111,5 +135,13 @@ class Gee:
         }
         return dicc
 
+    def __repr__(self):
+        return f"GEE({self.name}, {self.location}, {self.horametro}, {self.autonomia})"
+
     def __str__(self) -> str:
         return self.name
+
+class Darkmode(Base):
+    __tablename__ = 'dark'
+    id = Column(Integer, primary_key=True)
+    on = Column(Boolean, nullable=False)
