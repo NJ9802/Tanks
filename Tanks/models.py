@@ -61,16 +61,19 @@ class Gee(Base):
     name = Column(String, nullable=False)
     location = Column(String, nullable=False)
     horametro = Column(String, nullable=False)
-    autonomia = Column(Integer, nullable=False)
+    autonomia_cc = Column(Integer, nullable=False)
+    autonomia_sc = Column(Integer, nullable=False)
     horametro_roto = Column(Boolean, nullable=False)
     tanks_id = Column(Integer, ForeignKey('tanks.id'))
     tank = relationship('Tank', back_populates='gees')
 
-    def __init__(self, name: str, location: str, horametro: str, autonomia: int) -> None:
+    def __init__(self, name: str, location: str, horametro: str, autonomia_cc: int, autonomia_sc: int, horametro_roto: bool) -> None:
         self.name = name
         self.location = location
         self.horametro = horametro
-        self.autonomia = autonomia
+        self.autonomia_cc = autonomia_cc
+        self.autonomia_sc = autonomia_sc
+        self.horametro_roto = horametro_roto
 
     def operacion(self, tipo: str, hora_inicial: str, consumo: int, horametro_roto: bool, hora_final: str = '00:00', horametro_final: str = '0'):
         try:
@@ -84,6 +87,7 @@ class Gee(Base):
             try:
                 hora_final_formateada = datetime.datetime.strptime(
                     hora_final, '%H:%M')
+                horametro_final = 'Roto'
 
             except ValueError:
                 return f'La entrada {hora_final} no es una hora valida'
@@ -108,38 +112,45 @@ class Gee(Base):
         if tiempo_horas < 0:
             return 'La entrada que define el tiempo trabajado es menor que la marca inicial'
 
+        if tipo == 'PS':
+            energia_generada = 0
+            demanda_liberada = 0
+            autonomia = self.autonomia_sc
+
+        else:
+            energia_generada = consumo * 3
+            demanda_liberada = round(energia_generada / tiempo_horas, 2)
+            autonomia = self.autonomia_cc
+
         consumo_por_hora = consumo / tiempo_horas
 
-        if consumo_por_hora > self.autonomia:
+        if consumo_por_hora > autonomia:
             sobreconsumo = True
 
         else:
             sobreconsumo = False
 
-        if tipo == 'PS':
-            energia_generada = 0
-            demanda_liberada = 0
-
-        else:
-            energia_generada = consumo * 3
-            demanda_liberada = round(energia_generada / tiempo_horas, 2)
-
-        dicc = {
+        processed_data = {
+            'gee': self,
             'tipo': tipo,
+            'horametro_inicial': self.horametro,
+            'horametro_final': horametro_final,
             'tiempo_horas': tiempo_horas,
+            'hora_inicial': hora_inicial,
             'hora_final': hora_final.time().isoformat(timespec='minutes'),
             'energia_generada': energia_generada,
             'demanda_liberada': demanda_liberada,
             'consumo': consumo,
             'sobreconsumo': sobreconsumo,
         }
-        return dicc
+        return processed_data
 
     def __repr__(self):
         return f"GEE({self.name}, {self.location}, {self.horametro}, {self.autonomia})"
 
     def __str__(self) -> str:
         return self.name
+
 
 class Darkmode(Base):
     __tablename__ = 'dark'

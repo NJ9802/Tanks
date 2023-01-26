@@ -6,6 +6,7 @@ from cylinder_volume import villa_cuba, casas, morlas, mt_487, mt_488, mt_443, m
 from PIL import Image, ImageTk
 from validations import validate_time, validate_numeric_entry
 from db_main import update_darkmode, update_stock
+from to_excel import write_to_excel
 
 
 class Aplicacion:
@@ -380,7 +381,7 @@ class Aplicacion:
             volume = villa_cuba.volume(cm)
 
             self.existencia.set(volume)
-            self.consumo.set(round(existencia_anterior-volume))
+            self.consumo.set(round(existencia_anterior-volume, 2))
             self.vc_percent.set(villa_cuba.percent())
 
         elif self.localizacion.get() == 'cs':
@@ -396,7 +397,7 @@ class Aplicacion:
             volume = casas.volume(cm)
 
             self.existencia.set(volume)
-            self.consumo.set(round(existencia_anterior-volume))
+            self.consumo.set(round(existencia_anterior-volume, 2))
             self.cs_percent.set(casas.percent())
 
         else:
@@ -412,7 +413,7 @@ class Aplicacion:
             volume = morlas.volume(cm)
 
             self.existencia.set(volume)
-            self.consumo.set(round(existencia_anterior-volume))
+            self.consumo.set(round(existencia_anterior-volume, 2))
             self.mo_percent.set(morlas.percent())
 
     def guardar(self):
@@ -665,7 +666,6 @@ class Aplicacion:
         ventana.resizable(0, 0)
 
         # variables
-        self.fecha = StringVar()
         self.var_hora_inicial = StringVar()
         self.var_hora_final = StringVar()
         self.var_horametro_inicial = StringVar()
@@ -746,7 +746,9 @@ class Aplicacion:
         separador2 = Separator(ventana, orient='horizontal')
         separador3 = Separator(ventana, orient='horizontal')
 
-        button = Button(ventana, command=self.run, text='Accept')
+        button = Button(ventana, command=self.procesar_datos, text='Procesar')
+        self.excel_button = Button(ventana, text='Registrar', state='disabled',
+                                   command=self.registrar_datos)
 
         # Position
         mt_label.grid(column=0, row=0, columnspan=2, pady=10, padx=10)
@@ -774,6 +776,7 @@ class Aplicacion:
         existencia_final.grid(column=0, row=14, pady=10, padx=10, sticky='e')
 
         w_horametro_roto.grid(column=1, row=2, padx=10, pady=10)
+        self.e_fecha.grid(column=1, row=4, padx=10, pady=10)
         self.e_tipo.grid(column=1, row=5, padx=10, pady=10)
         e_hora_inicial.grid(column=1, row=6, padx=10, pady=10)
         self.e_hora_final.grid(column=1, row=7, padx=10, pady=10)
@@ -788,7 +791,8 @@ class Aplicacion:
         separador3.grid(column=0, row=15, padx=10,
                         pady=10, sticky='we', columnspan=2)
 
-        button.grid(column=0, row=16, columnspan=2, padx=10, pady=10)
+        button.grid(column=0, row=16, padx=10, pady=10)
+        self.excel_button.grid(column=1, row=16, padx=10, pady=10)
 
         if self.gee_obj.horametro == 'Roto':
             self.horametro_roto.set(True)
@@ -811,7 +815,7 @@ class Aplicacion:
             self.var_horametro_inicial.set(self.gee_obj.horametro)
             self.var_horametro_final.set('')
 
-    def run(self):
+    def procesar_datos(self):
         roto = self.horametro_roto.get()
         tipo = self.e_tipo.get()
         hora_inicial = self.var_hora_inicial.get()
@@ -839,8 +843,8 @@ class Aplicacion:
                 return 1
 
             else:
-                response = self.gee_obj.operacion(tipo=tipo, hora_inicial=hora_inicial,
-                                                  consumo=consumo_s, horametro_roto=roto, hora_final=hora_final)
+                processed_data = self.gee_obj.operacion(tipo=tipo, hora_inicial=hora_inicial,
+                                                        consumo=consumo_s, horametro_roto=roto, hora_final=hora_final)
 
         else:
             horametro = self.var_horametro_final.get()
@@ -850,22 +854,37 @@ class Aplicacion:
                 return 1
 
             else:
-                response = self.gee_obj.operacion(tipo=tipo, hora_inicial=hora_inicial,
-                                                  consumo=consumo_s, horametro_roto=roto, horametro_final=horametro)
+                processed_data = self.gee_obj.operacion(tipo=tipo, hora_inicial=hora_inicial,
+                                                        consumo=consumo_s, horametro_roto=roto, horametro_final=horametro)
 
-        if type(response) == str:
-            messagebox.showerror('Error', response)
+        if type(processed_data) == str:
+            messagebox.showerror('Error', processed_data)
 
         else:
-            self.var_tiempo_horas.set(response['tiempo_horas'])
-            self.var_hora_final.set(response['hora_final'])
-            self.var_energia_generada.set(response['energia_generada'])
-            self.var_demanda_liberada.set(response['demanda_liberada'])
+            self.var_tiempo_horas.set(processed_data['tiempo_horas'])
+            self.var_hora_final.set(processed_data['hora_final'])
+            self.var_energia_generada.set(processed_data['energia_generada'])
+            self.var_demanda_liberada.set(processed_data['demanda_liberada'])
             self.var_existencia.set(self.gee_obj.tank.stock)
 
-            if response['sobreconsumo']:
+            if processed_data['sobreconsumo']:
                 messagebox.showwarning(
                     'Sobreconsumo', 'Existe sobreconsumo en la operacion')
+
+            else:
+                self.excel_button['state'] = 'normal'
+
+                self.data_to_excel = processed_data
+                self.data_to_excel['fecha'] = self.e_fecha.get()
+
+    def registrar_datos(self):
+        try:
+            write_to_excel(self.data_to_excel)
+            messagebox.showinfo('Info', 'Operacion registrada correctamente')
+            self.excel_button['state'] = DISABLED
+        except Exception as e:
+            messagebox.showerror('Error', f'Existe un error en la operacion')
+            print(e)
 
 
 def main():
