@@ -3,16 +3,9 @@ from datetime import datetime
 import os
 import shutil
 import locale
-from db_main import update_gee
 
 
 def write_to_excel(data: dict):
-
-    print(locale.getlocale())
-
-    data['gee'].horametro = data['horametro_final']
-    update_gee(data['gee'])
-
     fecha = datetime.strptime(data['fecha'], '%d/%m/%y')
     month = fecha.strftime('%B')
     year = fecha.strftime('%Y')

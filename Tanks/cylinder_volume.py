@@ -14,6 +14,7 @@ mt_489 = session.query(Gee).filter_by(name='MT-489').first()
 mt_443 = session.query(Gee).filter_by(name='MT-443').first()
 mt_452 = session.query(Gee).filter_by(name='MT-452').first()
 
+all_gee = [mt_487, mt_488, mt_489, mt_443, mt_452]
 
 # if __name__ == '__main__':
 

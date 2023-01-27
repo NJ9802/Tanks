@@ -2,10 +2,11 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter.ttk import *
 from tkcalendar import DateEntry
-from cylinder_volume import villa_cuba, casas, morlas, mt_487, mt_488, mt_443, mt_489, mt_452, darkmode
+from cylinder_volume import villa_cuba, casas, morlas, mt_487, mt_488, mt_443, mt_489, mt_452, darkmode, all_gee
 from PIL import Image, ImageTk
 from validations import validate_time, validate_numeric_entry
-from db_main import update_darkmode, update_stock
+from db_main import update_darkmode, update_stock, update_gee
+
 from to_excel import write_to_excel
 
 
@@ -33,13 +34,11 @@ class Aplicacion:
         self.localizacion_entrada = StringVar(value='vc')
 
         # GEE variables
-        self.horametro_mt487 = DoubleVar()
-        self.horametro_mt488 = DoubleVar()
-        self.horametro_mt489 = DoubleVar()
-        self.horametro_mt443 = DoubleVar()
-        self.horametro_mt452 = DoubleVar()
+        self.horametros_var_list = []
+        for gee in all_gee:
+            self.horametros_var_list.append(StringVar(value=gee.horametro))
 
-        self.gee = StringVar(value='MT-487')
+        self.gee = StringVar(value=all_gee[0])
 
         self.modo_oscuro = BooleanVar()
 
@@ -182,33 +181,17 @@ class Aplicacion:
         self.gee_label = Label(self.gee_frame, text='Grupos Electrogenos')
         self.horametro_label = Label(self.gee_frame, text='Horametro')
 
-        self.mt487_radiobutton = Radiobutton(self.gee_frame, text='MT-487', variable=self.gee,
-                                             value='MT-487')
-        self.mt488_radiobutton = Radiobutton(self.gee_frame, text='MT-488', variable=self.gee,
-                                             value='MT-488')
-        self.mt489_radiobutton = Radiobutton(self.gee_frame, text='MT-489', variable=self.gee,
-                                             value='MT-489')
-        self.mt443_radiobutton = Radiobutton(self.gee_frame, text='MT-443', variable=self.gee,
-                                             value='MT-443')
-        self.mt452_radiobutton = Radiobutton(self.gee_frame, text='MT-452', variable=self.gee,
-                                             value='MT-452')
+        for index, gee in enumerate(all_gee):
+            Radiobutton(self.gee_frame, text=gee, variable=self.gee,
+                        value=gee).grid(column=0, row=index+1)
+            Label(self.gee_frame, textvariable=self.horametros_var_list[index]).grid(
+                column=1, row=index+1)
 
-        self.mt487_horametro_label = Label(
-            self.gee_frame, textvariable=self.horametro_mt487)
-        self.mt488_horametro_label = Label(
-            self.gee_frame, textvariable=self.horametro_mt488)
-        self.mt489_horametro_label = Label(
-            self.gee_frame, textvariable=self.horametro_mt489)
-        self.mt443_horametro_label = Label(
-            self.gee_frame, textvariable=self.horametro_mt443)
-        self.mt452_horametro_label = Label(
-            self.gee_frame, textvariable=self.horametro_mt452)
+        gee_separator = Separator(self.gee_frame, orient='horizontal')
 
-        self.gee_separator = Separator(self.gee_frame, orient='horizontal')
-
-        self.operacion_button = Button(
+        operacion_button = Button(
             self.gee_frame, text='Operacion', command=self.operacion)
-        self.info_button = Button(self.gee_frame, text='Informacion')
+        info_button = Button(self.gee_frame, text='Informacion')
 
         # Tanks Posicion
 
@@ -266,34 +249,17 @@ class Aplicacion:
         self.gee_label.grid(column=0, row=0, pady=10, padx=10)
         self.horametro_label.grid(column=1, row=0, pady=10, padx=10)
 
-        self.mt487_radiobutton.grid(column=0, row=1)
-        self.mt488_radiobutton.grid(column=0, row=2)
-        self.mt489_radiobutton.grid(column=0, row=3)
-        self.mt443_radiobutton.grid(column=0, row=4)
-        self.mt452_radiobutton.grid(column=0, row=5)
-
-        self.mt487_horametro_label.grid(column=1, row=1)
-        self.mt488_horametro_label.grid(column=1, row=2)
-        self.mt489_horametro_label.grid(column=1, row=3)
-        self.mt443_horametro_label.grid(column=1, row=4)
-        self.mt452_horametro_label.grid(column=1, row=5)
-
-        self.gee_separator.grid(
+        gee_separator.grid(
             column=0, row=6, columnspan=2, sticky='we', padx=10)
 
-        self.operacion_button.grid(column=0, row=7, padx=10)
-        self.info_button.grid(column=1, row=7, padx=10)
+        operacion_button.grid(column=0, row=7, padx=10)
+        info_button.grid(column=1, row=7, padx=10)
 
         self.gee_frame.columnconfigure(0, weight=1)
         self.gee_frame.columnconfigure(1, weight=1)
-        self.gee_frame.rowconfigure(0, weight=1)
-        self.gee_frame.rowconfigure(1, weight=1)
-        self.gee_frame.rowconfigure(2, weight=1)
-        self.gee_frame.rowconfigure(3, weight=1)
-        self.gee_frame.rowconfigure(4, weight=1)
-        self.gee_frame.rowconfigure(5, weight=1)
-        self.gee_frame.rowconfigure(6, weight=1)
-        self.gee_frame.rowconfigure(7, weight=1)
+
+        for number in range(index+4):
+            self.gee_frame.rowconfigure(number, weight=1)
 
         # Funciones iniciales
 
@@ -677,22 +643,9 @@ class Aplicacion:
         self.horametro_roto = BooleanVar()
         self.var_existencia = DoubleVar()
 
-        mt = self.gee.get()
-
-        if mt == 'MT-487':
-            self.gee_obj = mt_487
-
-        elif mt == 'MT-488':
-            self.gee_obj = mt_488
-
-        elif mt == 'MT-489':
-            self.gee_obj = mt_489
-
-        elif mt == 'MT-443':
-            self.gee_obj = mt_443
-
-        else:
-            self.gee_obj = mt_452
+        for gee in all_gee:
+            if gee.name == self.gee.get():
+                self.gee_obj = gee
 
         self.var_horametro_inicial.set(self.gee_obj.horametro)
 
@@ -882,6 +835,15 @@ class Aplicacion:
             write_to_excel(self.data_to_excel)
             messagebox.showinfo('Info', 'Operacion registrada correctamente')
             self.excel_button['state'] = DISABLED
+
+            # Update horametro_final value in database and GUI
+            horametro = self.data_to_excel['horametro_final']
+            self.horametros_var_list[all_gee.index(
+                self.gee_obj)].set(horametro)
+
+            self.gee_obj.horametro = horametro
+            update_gee(self.gee_obj)
+
         except Exception as e:
             messagebox.showerror('Error', f'Existe un error en la operacion')
             print(e)
