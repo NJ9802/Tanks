@@ -16,18 +16,24 @@ class Tank(Base):
     capacity = Column(Float, nullable=False)
     stock = Column(Float, nullable=False)
     height_cm = Column(Float)
+    max_height = Column(Float, nullable=False)
     gees = relationship('Gee', back_populates='tank')
 
-    def __init__(self, location: str, radio: float, large: float, capacity: float, stock: float, height_cm: float):
+    def __init__(self, location: str, radio: float, large: float, capacity: float,
+                 stock: float, height_cm: float, max_height: int):
         self.location = location
         self.radio = radio
         self.large = large
         self.capacity = capacity
         self.stock = stock
         self.height_cm = height_cm
+        self.max_height = max_height
 
     def volume(self, cm):
 
+        if cm > self.max_height:
+            return f'Capacidad maxima excedida\nMedicion maxima {self.max_height} cm'
+        
         self.height_cm = cm/100
 
         part1 = ((self.radio-self.height_cm)/self.radio)

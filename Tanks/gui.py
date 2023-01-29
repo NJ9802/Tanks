@@ -2,10 +2,10 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter.ttk import *
 from tkcalendar import DateEntry
-from cylinder_volume import villa_cuba, casas, morlas, mt_487, mt_488, mt_443, mt_489, mt_452, darkmode, all_gee
 from PIL import Image, ImageTk
 from validations import validate_time, validate_numeric_entry
 from db_main import update_darkmode, update_stock, update_gee
+from db_main import all_gee, all_tanks, darkmode
 
 from to_excel import write_to_excel
 
@@ -22,16 +22,19 @@ class Aplicacion:
 
         # Tanks Variables
         self.cm = DoubleVar()
-        self.localizacion = StringVar(value='vc')
+        self.localizacion = StringVar(value=all_tanks[0].location)
         self.existencia = DoubleVar()
         self.consumo = DoubleVar()
-        self.vc_percent = DoubleVar()
-        self.cs_percent = DoubleVar()
-        self.mo_percent = DoubleVar()
+
+        self.tank_percent_list = []
+
+        for tank in all_tanks:
+            self.tank_percent_list.append(DoubleVar())
+
         self.existencia_anterior = DoubleVar()
         self.medicion_anterior = DoubleVar()
         self.entrada_litros = DoubleVar()
-        self.localizacion_entrada = StringVar(value='vc')
+        self.localizacion_entrada = StringVar(value=all_tanks[0].location)
 
         # GEE variables
         self.horametros_var_list = []
@@ -111,20 +114,13 @@ class Aplicacion:
         self.medicion_cm = Entry(
             self.tanks_frame, textvariable=self.cm, width=6)
 
-        self.tanques_label = Label(self.tanks_frame,
-                                   text='Seleccione el Tanque:')
-        self.tanque_vc = Radiobutton(self.tanks_frame, text='Villa Cuba',
-                                     variable=self.localizacion,
-                                     value='vc',
-                                     command=self.actualizar_valores)
-        self.tanque_cs = Radiobutton(self.tanks_frame, text='Casas',
-                                     variable=self.localizacion,
-                                     value='cs',
-                                     command=self.actualizar_valores)
-        self.tanque_mo = Radiobutton(self.tanks_frame, text='Las Morlas',
-                                     variable=self.localizacion,
-                                     value='mo',
-                                     command=self.actualizar_valores)
+        self.tanques_label = Label(
+            self.tanks_frame, text='Seleccione el Tanque:')
+
+        for index, tank in enumerate(all_tanks):
+            Radiobutton(self.tanks_frame, text=tank.location,
+                        variable=self.localizacion, value=tank.location, command=self.actualizar_valores).grid(
+                column=1, row=index, padx=10, pady=10, sticky='w')
 
         self.existencia_final_label = Label(self.tanks_frame,
                                             text='Existencia Final:')
@@ -153,29 +149,56 @@ class Aplicacion:
         self.boton_calcular = Button(self.tanks_frame, text='Calcular',
                                      command=self.calcular)
 
-        self.vc_label = Label(self.tanks_frame,
-                              text='Villa Cuba')
-        self.cs_label = Label(self.tanks_frame,
-                              text='Casas')
-        self.mo_label = Label(self.tanks_frame,
-                              text='Las Morlas')
-        self.vc_progressbar = Progressbar(self.tanks_frame,
-                                          orient='vertical',
-                                          variable=self.vc_percent,
-                                          length=270, style='dark.Vertical.TProgressbar')
-        self.cs_progressbar = Progressbar(self.tanks_frame,
-                                          orient='vertical',
-                                          variable=self.cs_percent,
-                                          length=270, style='dark.Vertical.TProgressbar')
-        self.mo_progressbar = Progressbar(self.tanks_frame,
-                                          orient='vertical',
-                                          variable=self.mo_percent,
-                                          length=270, style='dark.Vertical.TProgressbar')
-
+        for index, tank in enumerate(all_tanks):
+            Label(self.tanks_frame, text=tank.location).grid(
+                column=index+3, row=0, padx=5, pady=10)
+            Progressbar(self.tanks_frame, orient='vertical', variable=self.tank_percent_list[index],
+                        length=270, style='dark.Vertical.TProgressbar').grid(column=index+3, row=1, padx=5, pady=5,
+                                                                             rowspan=10)
         self.separador1 = Separator(self.tanks_frame, orient='horizontal')
         self.separador2 = Separator(self.tanks_frame, orient='horizontal')
         self.separador_vertical = Separator(
             self.tanks_frame, orient='vertical')
+
+        # Tanks Posicion
+        self.tanques_label.grid(column=0, row=0, padx=10, pady=10)
+
+        self.separador1.grid(column=0, row=index+1, columnspan=2,
+                             pady=5, padx=5, sticky="ew")
+
+        self.medicion_anterior_label.grid(
+            column=0, row=index+2, padx=10, pady=10)
+        self.medicion_anterior_cm.grid(column=1, row=index+2, padx=10, pady=10)
+
+        self.medicion_cm_label.grid(column=0, row=index+3, padx=10, pady=10)
+        self.medicion_cm.grid(column=1, row=index+3,
+                              sticky='e', padx=10, pady=10)
+
+        self.separador2.grid(column=0, row=index+4, columnspan=2,
+                             padx=5, pady=5, sticky="ew")
+
+        self.existencia_anterior_label.grid(column=0, row=index+5,
+                                            padx=10, pady=10)
+        self.existencia_anterior_cm.grid(column=1, row=index+5,
+                                         padx=10, pady=10)
+
+        self.existencia_final_label.grid(column=0, row=index+6,
+                                         padx=10, pady=10)
+        self.existencia_final.grid(column=1, row=index+6,
+                                   padx=10, pady=10)
+
+        self.gasto_combustible_label.grid(column=0, row=index+7,
+                                          padx=10, pady=10)
+        self.gasto_combustible.grid(column=1, row=index+7, padx=10, pady=10)
+
+        self.boton_calcular.grid(column=0, row=index+8, padx=10, pady=10,
+                                 columnspan=2)
+
+        self.separador_vertical.grid(column=2, row=0, rowspan=index+9,
+                                     padx=5, pady=5, sticky='ns')
+
+        self.barra_estado.grid(column=0, row=1,
+                               columnspan=6, sticky='ew')
 
         # GEE Widgets
         self.gee_label = Label(self.gee_frame, text='Grupos Electrogenos')
@@ -193,67 +216,15 @@ class Aplicacion:
             self.gee_frame, text='Operacion', command=self.operacion)
         info_button = Button(self.gee_frame, text='Informacion')
 
-        # Tanks Posicion
-
-        self.tanques_label.grid(column=0, row=0, padx=10, pady=10)
-        self.tanque_vc.grid(column=1, row=0, padx=10, pady=10, sticky='w')
-        self.tanque_cs.grid(column=1, row=1, padx=10, pady=10, sticky='w')
-        self.tanque_mo.grid(column=1, row=2, padx=10, pady=10, sticky='w')
-
-        self.separador1.grid(column=0, row=3, columnspan=2,
-                             pady=5, padx=5, sticky="ew")
-
-        self.medicion_anterior_label.grid(column=0, row=4, padx=10, pady=10)
-        self.medicion_anterior_cm.grid(column=1, row=4, padx=10, pady=10)
-
-        self.medicion_cm_label.grid(column=0, row=5, padx=10, pady=10)
-        self.medicion_cm.grid(column=1, row=5, sticky='e', padx=10, pady=10)
-
-        self.separador2.grid(column=0, row=6, columnspan=2,
-                             padx=5, pady=5, sticky="ew")
-
-        self.existencia_anterior_label.grid(column=0, row=7,
-                                            padx=10, pady=10)
-        self.existencia_anterior_cm.grid(column=1, row=7,
-                                         padx=10, pady=10)
-
-        self.existencia_final_label.grid(column=0, row=8,
-                                         padx=10, pady=10)
-        self.existencia_final.grid(column=1, row=8,
-                                   padx=10, pady=10)
-
-        self.gasto_combustible_label.grid(column=0, row=9,
-                                          padx=10, pady=10)
-        self.gasto_combustible.grid(column=1, row=9, padx=10, pady=10)
-
-        self.boton_calcular.grid(column=0, row=10, padx=10, pady=10,
-                                 columnspan=2)
-
-        self.separador_vertical.grid(column=2, row=0, rowspan=11,
-                                     padx=5, pady=5, sticky='ns')
-
-        self.vc_label.grid(column=3, row=0, padx=5, pady=10)
-        self.vc_progressbar.grid(column=3, row=1, padx=5, pady=5,
-                                 rowspan=10)
-        self.cs_label.grid(column=4, row=0, padx=5, pady=10)
-        self.cs_progressbar.grid(column=4, row=1, padx=5, pady=5,
-                                 rowspan=10)
-        self.mo_label.grid(column=5, row=0, padx=5, pady=10)
-        self.mo_progressbar.grid(column=5, row=1, padx=5, pady=5,
-                                 rowspan=10)
-
-        self.barra_estado.grid(column=0, row=1,
-                               columnspan=6, sticky='ew')
-
         # GEE position
         self.gee_label.grid(column=0, row=0, pady=10, padx=10)
         self.horametro_label.grid(column=1, row=0, pady=10, padx=10)
 
         gee_separator.grid(
-            column=0, row=6, columnspan=2, sticky='we', padx=10)
+            column=0, row=index+2, columnspan=2, sticky='we', padx=10)
 
-        operacion_button.grid(column=0, row=7, padx=10)
-        info_button.grid(column=1, row=7, padx=10)
+        operacion_button.grid(column=0, row=index+3, padx=10)
+        info_button.grid(column=1, row=index+3, padx=10)
 
         self.gee_frame.columnconfigure(0, weight=1)
         self.gee_frame.columnconfigure(1, weight=1)
@@ -264,20 +235,19 @@ class Aplicacion:
         # Funciones iniciales
 
         # Valor inicial de medicion anterior y existencia anterior
-        self.medicion_anterior.set(villa_cuba.height_cm)
-        self.existencia_anterior.set(villa_cuba.stock)
+        self.medicion_anterior.set(all_tanks[0].height_cm)
+        self.existencia_anterior.set(all_tanks[0].stock)
 
         # Actualizar por ciento en barras
-        self.vc_percent.set(villa_cuba.percent())
-        self.cs_percent.set(casas.percent())
-        self.mo_percent.set(morlas.percent())
+        for index, tank in enumerate(all_tanks):
+            self.tank_percent_list[index].set(tank.percent())
 
         # Enfoque inicial
         self.medicion_cm.focus_set()
         self.cm.set('')
 
         # Limpiar campo al hacer click
-        self.medicion_cm.bind('<Button-1>', self.limpiar_cm)
+        self.medicion_cm.bind('<Button-1>', lambda _: self.cm.set(''))
 
         # Calcular al presionar ENTER
         self.medicion_cm.bind('<Return>', lambda _: self.calcular())
@@ -301,26 +271,17 @@ class Aplicacion:
             self.estilo.theme_use('breeze-dark')
             update_darkmode(True)
 
-    def limpiar_cm(self, event):
-        self.cm.set('')
-
     def actualizar_valores(self):
         self.existencia.set(0.0)
         self.consumo.set(0.0)
         self.cm.set('')
         self.medicion_cm.focus_set()
 
-        if self.localizacion.get() == 'vc':
-            self.medicion_anterior.set(villa_cuba.height_cm)
-            self.existencia_anterior.set(villa_cuba.stock)
-
-        elif self.localizacion.get() == 'cs':
-            self.medicion_anterior.set(casas.height_cm)
-            self.existencia_anterior.set(casas.stock)
-
-        else:
-            self.medicion_anterior.set(morlas.height_cm)
-            self.existencia_anterior.set(morlas.stock)
+        for tank in all_tanks:
+            if tank.location == self.localizacion.get():
+                self.medicion_anterior.set(tank.height_cm)
+                self.existencia_anterior.set(tank.stock)
+                break
 
     def calcular(self):
         try:
@@ -333,59 +294,24 @@ class Aplicacion:
                             lambda: self.barra_estado.config(text=self.mensaje))
             return 1
 
-        if self.localizacion.get() == 'vc':
+        for index, tank in enumerate(all_tanks):
+            if tank.location == self.localizacion.get():
+                actual_stock = tank.volume(cm)
 
-            if cm > 189:
-                self.consumo.set('Error!')
-                self.existencia.set('Error!')
-                self.barra_estado['text'] = 'Medicion excedida'
-                self.root.after(4000,
-                                lambda: self.barra_estado.config(text=self.mensaje))
-                return 1
+                if type(actual_stock) == str:
+                    messagebox.showerror('Error', actual_stock)
+                    return 1
 
-            existencia_anterior = self.existencia_anterior.get()
-            volume = villa_cuba.volume(cm)
-
-            self.existencia.set(volume)
-            self.consumo.set(round(existencia_anterior-volume, 2))
-            self.vc_percent.set(villa_cuba.percent())
-
-        elif self.localizacion.get() == 'cs':
-            if cm > 141:
-                self.consumo.set('Error!')
-                self.existencia.set('Error!')
-                self.barra_estado['text'] = 'Medicion excedida'
-                self.root.after(4000,
-                                lambda: self.barra_estado.config(text=self.mensaje))
-                return 1
-
-            existencia_anterior = self.existencia_anterior.get()
-            volume = casas.volume(cm)
-
-            self.existencia.set(volume)
-            self.consumo.set(round(existencia_anterior-volume, 2))
-            self.cs_percent.set(casas.percent())
-
-        else:
-            if cm > 141:
-                self.consumo.set('Error!')
-                self.existencia.set('Error!')
-                self.barra_estado['text'] = 'Medicion excedida'
-                self.root.after(4000,
-                                lambda: self.barra_estado.config(text=self.mensaje))
-                return 1
-
-            existencia_anterior = self.existencia_anterior.get()
-            volume = morlas.volume(cm)
-
-            self.existencia.set(volume)
-            self.consumo.set(round(existencia_anterior-volume, 2))
-            self.mo_percent.set(morlas.percent())
+                self.consumo.set(
+                    round(self.existencia_anterior.get()-actual_stock, 2))
+                self.existencia.set(actual_stock)
+                self.tank_percent_list[index].set(tank.percent())
+                break
 
     def guardar(self):
-        update_stock(villa_cuba)
-        update_stock(casas)
-        update_stock(morlas)
+        for tank in all_tanks:
+            update_stock(tank)
+
         self.barra_estado['text'] = 'Actualizado correctamente'
         self.root.after(2000,
                         lambda: self.barra_estado.config(text=self.mensaje))
@@ -398,15 +324,11 @@ class Aplicacion:
         entrada_frame = Frame(entrada)
         tanques_label = Label(entrada_frame,
                               text='Seleccione el Tanque:')
-        vc = Radiobutton(entrada_frame, text='Villa Cuba',
-                         variable=self.localizacion_entrada,
-                         value='vc')
-        cs = Radiobutton(entrada_frame, text='Casas',
-                         variable=self.localizacion_entrada,
-                         value='cs')
-        mo = Radiobutton(entrada_frame, text='Las Morlas',
-                         variable=self.localizacion_entrada,
-                         value='mo')
+
+        for index, tank in enumerate(all_tanks):
+            Radiobutton(entrada_frame, text=tank.location, variable=self.localizacion_entrada,
+                        value=tank.location).grid(column=1, row=index, padx=5, pady=5, sticky='w')
+
         l_entrada = Label(entrada_frame, text='Entrada:')
         e_entrada = Entry(entrada_frame, textvariable=self.entrada_litros,
                           width=10)
@@ -419,18 +341,12 @@ class Aplicacion:
         entrada_frame.grid()
 
         tanques_label.grid(column=0, row=0, padx=5, pady=5)
-        vc.grid(column=1, row=0, padx=5, pady=5,
-                sticky='w')
-        cs.grid(column=1, row=1, padx=5, pady=5,
-                sticky='w')
-        mo.grid(column=1, row=2, padx=5, pady=5,
-                sticky='w')
-        l_entrada.grid(column=0, row=3, padx=5, pady=5)
-        e_entrada.grid(column=1, row=3, padx=5, pady=5)
-        separador.grid(column=0, row=4, padx=5, pady=5,
-                       columnspan=2, sticky='ew')
-        b_aceptar.grid(column=0, row=5, padx=5, pady=5)
-        b_salir.grid(column=1, row=5, padx=5, pady=5)
+        l_entrada.grid(column=0, row=index+1, padx=5, pady=5)
+        e_entrada.grid(column=1, row=index+1, padx=5, pady=5)
+        separador.grid(column=0, row=index+2, padx=5,
+                       pady=5, columnspan=2, sticky='ew')
+        b_aceptar.grid(column=0, row=index+3, padx=5, pady=5)
+        b_salir.grid(column=1, row=index+3, padx=5, pady=5)
 
         entrada.transient(self.root)
         entrada.grab_set()
@@ -451,20 +367,12 @@ class Aplicacion:
                             lambda: self.barra_estado.config(text=self.mensaje))
             return 1
 
-        if self.localizacion_entrada.get() == 'vc':
-            villa_cuba.stock += entrada
-            update_stock(villa_cuba)
-            self.vc_percent.set(villa_cuba.percent())
-
-        elif self.localizacion_entrada.get() == 'cs':
-            casas.stock += entrada
-            update_stock(casas)
-            self.cs_percent.set(casas.percent())
-
-        else:
-            morlas.stock += entrada
-            update_stock(morlas)
-            self.mo_percent.set(morlas.percent())
+        for index, tank in enumerate(all_tanks):
+            if tank.location == self.localizacion_entrada.get():
+                tank.stock += entrada
+                update_stock(tank)
+                self.tank_percent_list[index].set(tank.percent())
+                break
 
         self.actualizar_valores()
         self.barra_estado['text'] = 'Actualizado correctamente'
@@ -478,15 +386,11 @@ class Aplicacion:
 
         ventana_frame = Frame(ventana)
         label = Label(ventana_frame, text='Establecer valor inicial')
-        vc = Radiobutton(ventana_frame, text='Villa Cuba',
-                         variable=self.localizacion_entrada,
-                         value='vc')
-        cs = Radiobutton(ventana_frame, text='Casas',
-                         variable=self.localizacion_entrada,
-                         value='cs')
-        mo = Radiobutton(ventana_frame, text='Las Morlas',
-                         variable=self.localizacion_entrada,
-                         value='mo')
+
+        for index, tank in enumerate(all_tanks):
+            Radiobutton(ventana_frame, text=tank.location, variable=self.localizacion_entrada,
+                        value=tank.location).grid(column=1, row=index, padx=5, pady=5, sticky='w')
+
         l_entrada = Label(ventana_frame, text='Valor inicial:')
         e_entrada = Entry(ventana_frame, textvariable=self.entrada_litros,
                           width=10)
@@ -499,18 +403,12 @@ class Aplicacion:
         ventana_frame.grid()
 
         label.grid(column=0, row=0, padx=5, pady=5)
-        vc.grid(column=1, row=0, padx=5, pady=5,
-                sticky='w')
-        cs.grid(column=1, row=1, padx=5, pady=5,
-                sticky='w')
-        mo.grid(column=1, row=2, padx=5, pady=5,
-                sticky='w')
-        l_entrada.grid(column=0, row=3, padx=5, pady=5)
-        e_entrada.grid(column=1, row=3, padx=5, pady=5)
-        separador.grid(column=0, row=4, padx=5, pady=5,
-                       columnspan=2, sticky='ew')
-        b_aceptar.grid(column=0, row=5, padx=5, pady=5)
-        b_salir.grid(column=1, row=5, padx=5, pady=5)
+        l_entrada.grid(column=0, row=index+1, padx=5, pady=5)
+        e_entrada.grid(column=1, row=index+1, padx=5, pady=5)
+        separador.grid(column=0, row=index+2, padx=5,
+                       pady=5, columnspan=2, sticky='ew')
+        b_aceptar.grid(column=0, row=index+3, padx=5, pady=5)
+        b_salir.grid(column=1, row=index+3, padx=5, pady=5)
 
         ventana.transient(self.root)
         ventana.grab_set()
@@ -531,20 +429,12 @@ class Aplicacion:
                             lambda: self.barra_estado.config(text=self.mensaje))
             return 1
 
-        if self.localizacion_entrada.get() == 'vc':
-            villa_cuba.stock = entrada
-            update_stock(villa_cuba)
-            self.vc_percent.set(villa_cuba.percent())
-
-        elif self.localizacion_entrada.get() == 'cs':
-            casas.stock = entrada
-            update_stock(casas)
-            self.cs_percent.set(casas.percent())
-
-        else:
-            morlas.stock = entrada
-            update_stock(morlas)
-            self.mo_percent.set(morlas.percent())
+        for index, tank in enumerate(all_tanks):
+            if tank.location == self.localizacion_entrada.get():
+                tank.stock = entrada
+                update_stock(tank)
+                self.tank_percent_list[index].set(tank.percent())
+                break
 
         self.actualizar_valores()
         self.barra_estado['text'] = 'Actualizado correctamente'
@@ -558,34 +448,20 @@ class Aplicacion:
 
         ventana_frame = Frame(ventana)
 
-        vc = Radiobutton(ventana_frame, text='Tabla Villa Cuba',
-                         variable=self.localizacion_entrada,
-                         value='vc')
-        cs = Radiobutton(ventana_frame, text='Tabla Las Casas',
-                         variable=self.localizacion_entrada,
-                         value='cs')
-        mo = Radiobutton(ventana_frame, text='Tabla Las Morlas',
-                         variable=self.localizacion_entrada,
-                         value='mo')
+        for index, tank in enumerate(all_tanks):
+            Radiobutton(ventana_frame, text=f'Tabla de {tank.location}', variable=self.localizacion_entrada,
+                        value=tank.location).grid(column=0, row=index, padx=10, pady=10, sticky='we')
 
         b_ver = Button(ventana_frame, text='Ver', command=self.ver)
 
         ventana_frame.grid(sticky='swe')
 
-        vc.grid(column=0, row=0, padx=10, pady=10,
-                sticky='we')
-        cs.grid(column=0, row=1, padx=10, pady=10,
-                sticky='we')
-        mo.grid(column=0, row=2, padx=10, pady=10,
-                sticky='we')
-        b_ver.grid(column=0, row=3, padx=10, pady=10,
+        b_ver.grid(column=0, row=index+1, padx=10, pady=10,
                    sticky='we')
 
         ventana.columnconfigure(0, weight=1)
-        ventana.rowconfigure(0, weight=1)
-        ventana.rowconfigure(0, weight=1)
-        ventana.rowconfigure(1, weight=1)
-        ventana.rowconfigure(3, weight=1)
+        for number in range(index+1):
+            ventana.rowconfigure(number, weight=1)
 
         ventana.bind('<Return>', lambda _: self.ver())
 
@@ -597,27 +473,19 @@ class Aplicacion:
     def ver(self):
         ver = Toplevel()
 
-        if self.localizacion_entrada.get() == 'vc':
-            title = 'Tabla Villa Cuba'
-            file = 'tablas/vc.jpg'
-            img = Image.open(file).rotate(270, expand=1)
-
-        elif self.localizacion_entrada.get() == 'cs':
-            title = 'Tabla Las Casas'
-            file = 'tablas/cs.jpg'
-            img = Image.open(file).rotate(270, expand=1)
-
-        else:
-            title = 'Tabla Las Morlas'
-            file = 'tablas/mo.jpg'
-            img = Image.open(file).rotate(90, expand=1)
+        for tank in all_tanks:
+            if tank.location == self.localizacion_entrada.get():
+                title = f'Tabla {tank.location}'
+                file = f'tablas/{tank.location}.jpg'
+                img = Image.open(file).rotate(270, expand=1)
+                break
 
         ver.title(title)
 
         heigth = self.root.winfo_screenheight()
         width = self.root.winfo_screenwidth()
-        self.img = ImageTk.PhotoImage(img.resize((width, heigth)))
-        l_img = Label(ver, image=self.img)
+        img = ImageTk.PhotoImage(img.resize((width, heigth)))
+        l_img = Label(ver, image=img)
 
         l_img.grid(column=0, row=0)
 
@@ -646,6 +514,7 @@ class Aplicacion:
         for gee in all_gee:
             if gee.name == self.gee.get():
                 self.gee_obj = gee
+                break
 
         self.var_horametro_inicial.set(self.gee_obj.horametro)
 

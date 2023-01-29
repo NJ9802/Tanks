@@ -3,9 +3,9 @@ from models import Tank, Gee, Darkmode
 
 
 def ingresar_data():
-    villa_cuba = Tank('Villa Cuba', 1.8969469/2, 7.558, 21359, 5000, 90.00)
-    casas = Tank('Las Casas', 0.707, 6.068, 9529, 5000, 90.00)
-    morlas = Tank('Las Morlas', 0.707, 6.108, 9592, 5000, 90.00)
+    villa_cuba = Tank('Villa Cuba', 1.8969469/2, 7.558, 21359, 5000, 90.00, 189)
+    casas = Tank('Las Casas', 0.707, 6.068, 9529, 5000, 90.00, 141)
+    morlas = Tank('Las Morlas', 0.707, 6.108, 9592, 5000, 90.00, 141)
     mt_487 = Gee('MT-487', 'Villa Cuba', '1112.30', 58, 16, False)
     mt_488 = Gee('MT-488', 'Villa Cuba', '197.30', 58, 16, False)
     mt_489 = Gee('MT-489', 'Villa Cuba', '1212.30', 58, 16, False)
@@ -44,3 +44,7 @@ if __name__ == "__main__":
     Base.metadata.create_all(engine)
     print("¡Creación exitosa de la tabla productos!\n")
     ingresar_data()
+
+darkmode = session.query(Darkmode).filter_by(id=1).first()
+all_gee = session.query(Gee).all()
+all_tanks = session.query(Tank).all()
