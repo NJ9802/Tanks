@@ -13,8 +13,9 @@ from to_excel import write_to_excel
 class Aplicacion:
     def __init__(self) -> None:
         self.root = Tk()
-        self.root.title('Calculo de Combustible en Tanques')
+        self.root.title('Sistema de Gestion del Combustible')
         self.root.resizable(0, 0)
+        self.root.geometry('+0+0')
         self.root.option_add('*tearOff', False)
         self.root.tk.call('lappend', 'auto_path',
                           'themes/tkBreeze-master')
@@ -46,7 +47,7 @@ class Aplicacion:
         self.modo_oscuro = BooleanVar()
 
         # Chequear si estaba activado el modo oscuro
-        if darkmode.on == 1:
+        if darkmode.on:
             self.estilo.theme_use('breeze-dark')
             self.estilo.configure('variable.TLabel', background='#3b3b3c')
             self.estilo.configure(
@@ -57,37 +58,37 @@ class Aplicacion:
             self.estilo.theme_use('breeze')
 
         # Menu
-        self.barramenu = Menu(self.root)
-        self.root['menu'] = self.barramenu
-        self.menu1 = Menu(self.barramenu)
-        self.menu2 = Menu(self.barramenu)
-        self.menu3 = Menu(self.barramenu)
+        barramenu = Menu(self.root)
+        self.root['menu'] = barramenu
+        menu1 = Menu(barramenu)
+        menu2 = Menu(barramenu)
+        menu3 = Menu(barramenu)
 
-        self.barramenu.add_cascade(menu=self.menu1,
-                                   label='Archivo')
-        self.barramenu.add_cascade(menu=self.menu2,
-                                   label='Opciones')
-        self.barramenu.add_cascade(menu=self.menu3, label='Estilo')
+        barramenu.add_cascade(menu=menu1,
+                              label='Archivo')
+        barramenu.add_cascade(menu=menu2,
+                              label='Opciones')
+        barramenu.add_cascade(menu=menu3, label='Estilo')
 
-        self.menu1.add_command(label='Guardar',
-                               command=self.guardar, underline=0,
-                               accelerator='Ctrl+g')
-        self.menu1.add_separator()
-        self.menu1.add_command(label='Salir',
-                               command=lambda: self.root.destroy(), underline=0,
-                               accelerator='Alt+F4')
+        menu1.add_command(label='Guardar',
+                          command=self.guardar, underline=0,
+                          accelerator='Ctrl+g')
+        menu1.add_separator()
+        menu1.add_command(label='Salir',
+                          command=lambda: self.root.destroy(), underline=0,
+                          accelerator='Alt+F4')
 
-        self.menu2.add_command(label='Establecer valor inicial',
-                               command=self.valor_inicial)
-        self.menu2.add_command(label='Tablas de Aforo',
-                               underline=0, command=self.seleccionar_tablas,
-                               accelerator='Ctrl+t')
-        self.menu2.add_command(label='Entrada de Combustible',
-                               underline=0, command=self.entrada,
-                               accelerator='Ctrl+e')
+        menu2.add_command(label='Establecer valor inicial',
+                          command=self.valor_inicial)
+        menu2.add_command(label='Tablas de Aforo',
+                          underline=0, command=self.seleccionar_tablas,
+                          accelerator='Ctrl+t')
+        menu2.add_command(label='Entrada de Combustible',
+                          underline=0, command=self.entrada,
+                          accelerator='Ctrl+e')
 
-        self.menu3.add_checkbutton(label='Modo oscuro', variable=self.modo_oscuro,
-                                   command=self.switch_darkmode)
+        menu3.add_checkbutton(label='Modo oscuro', variable=self.modo_oscuro,
+                              command=self.switch_darkmode)
 
         # Barra de estado
         self.mensaje = ' Hecho por Nelson J. Aldazabal Hernandez.'
@@ -96,129 +97,129 @@ class Aplicacion:
                                   anchor='w')
 
         # NoteBook y Frames
-        self.notebook = Notebook(self.root)
+        notebook = Notebook(self.root)
 
-        self.tanks_frame = Frame(self.notebook)
-        self.gee_frame = Frame(self.notebook)
+        tanks_frame = Frame(notebook)
+        gee_frame = Frame(notebook)
 
-        self.notebook.grid()
-        self.tanks_frame.grid()
-        self.gee_frame.grid()
+        notebook.grid()
+        tanks_frame.grid()
+        gee_frame.grid()
 
-        self.notebook.add(self.tanks_frame, text='Tanques')
-        self.notebook.add(self.gee_frame, text='GEE')
+        notebook.add(tanks_frame, text='Tanques')
+        notebook.add(gee_frame, text='GEE')
 
         # Tanks Widgets
-        self.medicion_cm_label = Label(
-            self.tanks_frame, text='Medicion en cm:')
+        medicion_cm_label = Label(
+            tanks_frame, text='Medicion en cm:')
         self.medicion_cm = Entry(
-            self.tanks_frame, textvariable=self.cm, width=6)
+            tanks_frame, textvariable=self.cm, width=6)
 
-        self.tanques_label = Label(
-            self.tanks_frame, text='Seleccione el Tanque:')
+        tanques_label = Label(
+            tanks_frame, text='Seleccione el Tanque:')
 
         for index, tank in enumerate(all_tanks):
-            Radiobutton(self.tanks_frame, text=tank.location,
+            Radiobutton(tanks_frame, text=tank.location,
                         variable=self.localizacion, value=tank.location, command=self.actualizar_valores).grid(
                 column=1, row=index, padx=10, pady=10, sticky='w')
 
-        self.existencia_final_label = Label(self.tanks_frame,
-                                            text='Existencia Final:')
-        self.existencia_final = Label(self.tanks_frame, width=10,
-                                      textvariable=self.existencia,
-                                      anchor='e', style='variable.TLabel')
+        existencia_final_label = Label(tanks_frame,
+                                       text='Existencia Final:')
+        existencia_final = Label(tanks_frame, width=10,
+                                 textvariable=self.existencia,
+                                 anchor='e', style='variable.TLabel')
 
-        self.existencia_anterior_label = Label(self.tanks_frame,
-                                               text='Existencia Anterior:')
-        self.existencia_anterior_cm = Label(self.tanks_frame, width=10,
-                                            textvariable=self.existencia_anterior,
-                                            anchor='e', style='variable.TLabel')
-
-        self.medicion_anterior_label = Label(self.tanks_frame,
-                                             text='Medicion Anterior:')
-        self.medicion_anterior_cm = Label(self.tanks_frame, width=10,
-                                          textvariable=self.medicion_anterior,
-                                          anchor='e', style='variable.TLabel')
-
-        self.gasto_combustible_label = Label(self.tanks_frame,
-                                             text='Consumido:')
-        self.gasto_combustible = Label(self.tanks_frame, width=10,
-                                       textvariable=self.consumo,
+        existencia_anterior_label = Label(tanks_frame,
+                                          text='Existencia Anterior:')
+        existencia_anterior_cm = Label(tanks_frame, width=10,
+                                       textvariable=self.existencia_anterior,
                                        anchor='e', style='variable.TLabel')
 
-        self.boton_calcular = Button(self.tanks_frame, text='Calcular',
-                                     command=self.calcular)
+        medicion_anterior_label = Label(tanks_frame,
+                                        text='Medicion Anterior:')
+        medicion_anterior_cm = Label(tanks_frame, width=10,
+                                     textvariable=self.medicion_anterior,
+                                     anchor='e', style='variable.TLabel')
+
+        gasto_combustible_label = Label(tanks_frame,
+                                        text='Consumido:')
+        gasto_combustible = Label(tanks_frame, width=10,
+                                  textvariable=self.consumo,
+                                  anchor='e', style='variable.TLabel')
+
+        boton_calcular = Button(tanks_frame, text='Calcular',
+                                command=self.calcular)
 
         for index, tank in enumerate(all_tanks):
-            Label(self.tanks_frame, text=tank.location).grid(
+            Label(tanks_frame, text=tank.location).grid(
                 column=index+3, row=0, padx=5, pady=10)
-            Progressbar(self.tanks_frame, orient='vertical', variable=self.tank_percent_list[index],
+            Progressbar(tanks_frame, orient='vertical', variable=self.tank_percent_list[index],
                         length=270, style='dark.Vertical.TProgressbar').grid(column=index+3, row=1, padx=5, pady=5,
                                                                              rowspan=10)
-        self.separador1 = Separator(self.tanks_frame, orient='horizontal')
-        self.separador2 = Separator(self.tanks_frame, orient='horizontal')
-        self.separador_vertical = Separator(
-            self.tanks_frame, orient='vertical')
+        separador1 = Separator(tanks_frame, orient='horizontal')
+        separador2 = Separator(tanks_frame, orient='horizontal')
+        separador_vertical = Separator(
+            tanks_frame, orient='vertical')
 
         # Tanks Posicion
-        self.tanques_label.grid(column=0, row=0, padx=10, pady=10)
+        tanques_label.grid(column=0, row=0, padx=10, pady=10)
 
-        self.separador1.grid(column=0, row=index+1, columnspan=2,
-                             pady=5, padx=5, sticky="ew")
+        separador1.grid(column=0, row=index+1, columnspan=2,
+                        pady=5, padx=5, sticky="ew")
 
-        self.medicion_anterior_label.grid(
+        medicion_anterior_label.grid(
             column=0, row=index+2, padx=10, pady=10)
-        self.medicion_anterior_cm.grid(column=1, row=index+2, padx=10, pady=10)
+        medicion_anterior_cm.grid(column=1, row=index+2, padx=10, pady=10)
 
-        self.medicion_cm_label.grid(column=0, row=index+3, padx=10, pady=10)
+        medicion_cm_label.grid(column=0, row=index+3, padx=10, pady=10)
         self.medicion_cm.grid(column=1, row=index+3,
                               sticky='e', padx=10, pady=10)
 
-        self.separador2.grid(column=0, row=index+4, columnspan=2,
-                             padx=5, pady=5, sticky="ew")
+        separador2.grid(column=0, row=index+4, columnspan=2,
+                        padx=5, pady=5, sticky="ew")
 
-        self.existencia_anterior_label.grid(column=0, row=index+5,
-                                            padx=10, pady=10)
-        self.existencia_anterior_cm.grid(column=1, row=index+5,
-                                         padx=10, pady=10)
+        existencia_anterior_label.grid(column=0, row=index+5,
+                                       padx=10, pady=10)
+        existencia_anterior_cm.grid(column=1, row=index+5,
+                                    padx=10, pady=10)
 
-        self.existencia_final_label.grid(column=0, row=index+6,
-                                         padx=10, pady=10)
-        self.existencia_final.grid(column=1, row=index+6,
-                                   padx=10, pady=10)
+        existencia_final_label.grid(column=0, row=index+6,
+                                    padx=10, pady=10)
+        existencia_final.grid(column=1, row=index+6,
+                              padx=10, pady=10)
 
-        self.gasto_combustible_label.grid(column=0, row=index+7,
-                                          padx=10, pady=10)
-        self.gasto_combustible.grid(column=1, row=index+7, padx=10, pady=10)
+        gasto_combustible_label.grid(column=0, row=index+7,
+                                     padx=10, pady=10)
+        gasto_combustible.grid(column=1, row=index+7, padx=10, pady=10)
 
-        self.boton_calcular.grid(column=0, row=index+8, padx=10, pady=10,
-                                 columnspan=2)
+        boton_calcular.grid(column=0, row=index+8, padx=10, pady=10,
+                            columnspan=2)
 
-        self.separador_vertical.grid(column=2, row=0, rowspan=index+9,
-                                     padx=5, pady=5, sticky='ns')
+        separador_vertical.grid(column=2, row=0, rowspan=index+9,
+                                padx=5, pady=5, sticky='ns')
 
         self.barra_estado.grid(column=0, row=1,
                                columnspan=6, sticky='ew')
 
         # GEE Widgets
-        self.gee_label = Label(self.gee_frame, text='Grupos Electrogenos')
-        self.horametro_label = Label(self.gee_frame, text='Horametro')
+        gee_label = Label(gee_frame, text='Grupos Electrogenos')
+        horametro_label = Label(gee_frame, text='Horametro')
 
         for index, gee in enumerate(all_gee):
-            Radiobutton(self.gee_frame, text=gee, variable=self.gee,
+            Radiobutton(gee_frame, text=gee, variable=self.gee,
                         value=gee).grid(column=0, row=index+1)
-            Label(self.gee_frame, textvariable=self.horametros_var_list[index]).grid(
+            Label(gee_frame, textvariable=self.horametros_var_list[index]).grid(
                 column=1, row=index+1)
 
-        gee_separator = Separator(self.gee_frame, orient='horizontal')
+        gee_separator = Separator(gee_frame, orient='horizontal')
 
         operacion_button = Button(
-            self.gee_frame, text='Operacion', command=self.operacion)
-        info_button = Button(self.gee_frame, text='Informacion')
+            gee_frame, text='Operacion', command=self.operacion)
+        info_button = Button(gee_frame, text='Informacion')
 
         # GEE position
-        self.gee_label.grid(column=0, row=0, pady=10, padx=10)
-        self.horametro_label.grid(column=1, row=0, pady=10, padx=10)
+        gee_label.grid(column=0, row=0, pady=10, padx=10)
+        horametro_label.grid(column=1, row=0, pady=10, padx=10)
 
         gee_separator.grid(
             column=0, row=index+2, columnspan=2, sticky='we', padx=10)
@@ -226,11 +227,11 @@ class Aplicacion:
         operacion_button.grid(column=0, row=index+3, padx=10)
         info_button.grid(column=1, row=index+3, padx=10)
 
-        self.gee_frame.columnconfigure(0, weight=1)
-        self.gee_frame.columnconfigure(1, weight=1)
+        gee_frame.columnconfigure(0, weight=1)
+        gee_frame.columnconfigure(1, weight=1)
 
         for number in range(index+4):
-            self.gee_frame.rowconfigure(number, weight=1)
+            gee_frame.rowconfigure(number, weight=1)
 
         # Funciones iniciales
 
@@ -495,9 +496,10 @@ class Aplicacion:
 
     # Metodos GEE
     def operacion(self):
-        ventana = Toplevel()
+        ventana = Toplevel(self.root)
         ventana.title('Operacion')
         ventana.resizable(0, 0)
+        ventana.geometry(f'+{round(self.root.winfo_width()+10)}+0')
 
         # variables
         self.var_hora_inicial = StringVar()
